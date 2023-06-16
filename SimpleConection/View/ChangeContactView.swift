@@ -15,7 +15,6 @@ struct ChangeContactView: View {
     @State private var name = ""
     @State private var selectedDate = Date()
     @State private var lastMeeting = Date()
-    @State private var meetingTracker = true
     @State private var component = Components.week
     @State private var distance = 2
     @State private var reminder = true
@@ -54,9 +53,7 @@ struct ChangeContactView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 30) {
                     mainSection
-                    if meetingTracker {
-                        meetingTrackerSection
-                    }
+                    meetingTrackerSection
                     saveButton
                     Spacer()
                 }
@@ -65,15 +62,10 @@ struct ChangeContactView: View {
         .onAppear {
             name = contact.name
             selectedDate = contact.birthday
-            if let contact = contact.contact {
-                lastMeeting = contact.lastContact
-                meetingTracker = true
-                component = contact.component
-                distance = contact.distance
-                reminder = contact.reminder
-            } else {
-                meetingTracker = false
-            }
+            lastMeeting = contact.contact.lastContact
+            component = contact.contact.component
+            distance = contact.contact.distance
+            reminder = contact.contact.reminder
         }
         .frame(maxWidth: 550)
         .padding()
@@ -92,20 +84,20 @@ struct ChangeContactView: View {
     }
 }
 
-//struct ChangeContactView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        NavigationStack {
-//            ChangeContactView(contact: )
-//                .preferredColorScheme(.dark)
-//        }
-//        .environmentObject(ViewModel())
-//        NavigationStack {
-//            ChangeContactView(contact: sampleContact)
-//                .preferredColorScheme(.light)
-//        }
-//        .environmentObject(ViewModel())
-//    }
-//}
+struct ChangeContactView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationStack {
+            ChangeContactView(contact: .constant(sampleContact))
+                .preferredColorScheme(.dark)
+        }
+        .environmentObject(ViewModel())
+        NavigationStack {
+            ChangeContactView(contact: .constant(sampleContact))
+                .preferredColorScheme(.light)
+        }
+        .environmentObject(ViewModel())
+    }
+}
 
 extension ChangeContactView {
     var mainSection: some View {
@@ -117,41 +109,11 @@ extension ChangeContactView {
             DatePicker("День рождения:", selection: $selectedDate, in: dateRange, displayedComponents: .date)
                 .environment(\.locale, Locale.init(identifier: "ru"))
                 .foregroundColor(.theme.standard)
-            Toggle("Следить как часто общаетесь?", isOn: $meetingTracker)
-                .foregroundColor(.theme.standard)
-                .padding(.trailing, 5)
         }
     }
     var meetingTrackerSection: some View {
         VStack(alignment: .leading, spacing: 30) {
-            if contact.contact != nil {
-                if contact.contact!.allEvents.isEmpty {
-                    DatePicker("Последнее общение:", selection: $lastMeeting, in: dateRange, displayedComponents: .date)
-                        .environment(\.locale, Locale.init(identifier: "ru"))
-                        .foregroundColor(.theme.standard)
-                    VStack {
-                        Picker("", selection: $feeling) {
-                            ForEach(Feelings.allCases, id: \.self) { feeling in
-                                Text(feeling.rawValue).tag(feeling)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                    }
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Заметки или описание встречи:")
-                            .foregroundColor(.theme.standard)
-                        TextEditor(text: $describe)
-                            .frame(height: 100)
-                            .foregroundColor(.theme.secondaryText)
-                            .padding(10)
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(Color(uiColor: .secondarySystemFill))
-                                    .allowsHitTesting(false)
-                            }
-                    }
-                }
-            } else {
+            if contact.contact.allEvents.isEmpty {
                 DatePicker("Последнее общение:", selection: $lastMeeting, in: dateRange, displayedComponents: .date)
                     .environment(\.locale, Locale.init(identifier: "ru"))
                     .foregroundColor(.theme.standard)
@@ -173,7 +135,6 @@ extension ChangeContactView {
                             .foregroundColor(.theme.secondaryText)
                     }
                     TextEditor(text: $describe)
-                        .focused($inFocus)
                         .frame(height: 100)
                         .foregroundColor(.theme.secondaryText)
                         .padding(10)
@@ -225,24 +186,11 @@ extension ChangeContactView {
         HStack {
             Spacer()
             Button {
-                vm.updateContact(client: contact, name: name, birthday: selectedDate, isFavorite: contact.isFavorite, distance: distance, component: component, lastContact: lastMeeting, reminder: reminder, meetingTracker: meetingTracker, feeling: feeling, describe: describe)
-                if meetingTracker {
-                    if contact.contact != nil {
-                        contact = contact.updateInfo(name: name, birthday: selectedDate, isFavorite: contact.isFavorite, distance: distance, component: component, reminder: reminder)
-                    } else {
-                        contact = contact.updateAndCreateEvent(name: name, birthday: selectedDate, isFavorite: contact.isFavorite, distance: distance, component: component, lastContact: lastMeeting, reminder: reminder, feeling: feeling, describe: describe)
-                    }
-                    if reminder && meetingTracker {
-                        vm.setNotification(contactStruct: contact)
-                    } else {
-                        vm.deleteNotification(contactStruct: contact)
-                    }
+                vm.updateContact(client: contact, name: name, birthday: selectedDate, isFavorite: contact.isFavorite, distance: distance, component: component, lastContact: lastMeeting, reminder: reminder, feeling: feeling, describe: describe)
+                contact = contact.updateInfo(name: name, birthday: selectedDate, isFavorite: contact.isFavorite, distance: distance, component: component, reminder: reminder)
+                if reminder {
+                    vm.setNotification(contactStruct: contact)
                 } else {
-                    if contact.contact != nil {
-                        contact = contact.updateInfoAndDeleteEvent(name: name, birthday: selectedDate, isFavorite: contact.isFavorite)
-                    } else {
-                        contact = contact.updateWithoutEvent(name: name, birthday: selectedDate, isFavorite: contact.isFavorite)
-                    }
                     vm.deleteNotification(contactStruct: contact)
                 }
                 dismiss()

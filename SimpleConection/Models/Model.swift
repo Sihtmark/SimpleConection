@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CloudKit
 
 var sampleContact = ContactStruct(
     name: "Зинаида",
@@ -20,40 +21,45 @@ var sampleContact = ContactStruct(
             Meeting(date: Date(timeIntervalSinceNow: 1038576.0), feeling: Feelings.veryGood, describe: "посидели в Метрополь кафе на последнем этаже. Классно пообщались, обсудили все темы"),
             Meeting(date: Date(timeIntervalSinceNow: 8330984.0), feeling: Feelings.notTooBad, describe: "поговорили по телефону, узнали что у друг друга нового, договорились в следующий раз попить кофе в Старбаксе на набережной")
         ]
-    )
+    ), record: ViewModel().sampleData()!
 )
 
 struct ContactStruct: Identifiable, Codable, Equatable, Hashable {
-    var id = UUID()
+    var id = UUID().uuidString
     var name: String
     var birthday: Date
     var isFavorite: Bool
-    var contact: EventStruct?
+    var contact: EventStruct
+    var record: Data
     
     func updateInfo(name: String, birthday: Date, isFavorite: Bool, distance: Int, component: Components, reminder: Bool) -> ContactStruct {
-        return ContactStruct(name: name, birthday: birthday, isFavorite: isFavorite, contact: contact?.updateInfo(distance: distance, component: component, reminder: reminder))
+        return ContactStruct(name: name, birthday: birthday, isFavorite: isFavorite, contact: contact.updateInfo(distance: distance, component: component, reminder: reminder), record: record)
     }
     
     func updateWithoutEvent(name: String, birthday: Date, isFavorite: Bool) -> ContactStruct {
-        return ContactStruct(name: name, birthday: birthday, isFavorite: isFavorite)
+        return ContactStruct(name: name, birthday: birthday, isFavorite: isFavorite, contact: contact, record: record)
     }
     
     func changeLastContact(date: Date) -> ContactStruct {
-        return ContactStruct(name: name, birthday: birthday, isFavorite: isFavorite, contact: contact!.updateLastContact(lastContact: date))
+        return ContactStruct(name: name, birthday: birthday, isFavorite: isFavorite, contact: contact.updateLastContact(lastContact: date), record: record)
     }
     
     func updateAndCreateEvent(name: String, birthday: Date, isFavorite: Bool, distance: Int, component: Components, lastContact: Date, reminder: Bool, feeling: Feelings, describe: String) -> ContactStruct {
         let newContact = EventStruct(distance: distance, component: component, lastContact: lastContact, reminder: reminder, allEvents: [Meeting(date: lastContact, feeling: feeling, describe: describe)])
-        return ContactStruct(name: name, birthday: birthday, isFavorite: isFavorite, contact: newContact)
+        return ContactStruct(name: name, birthday: birthday, isFavorite: isFavorite, contact: newContact, record: record)
     }
     
-    func updateInfoAndDeleteEvent(name: String, birthday: Date, isFavorite: Bool) -> ContactStruct {
-        return ContactStruct(name: name, birthday: birthday, isFavorite: isFavorite, contact: nil)
-    }
+//    func updateInfoAndDeleteEvent(name: String, birthday: Date, isFavorite: Bool) -> ContactStruct {
+//        return ContactStruct(name: name, birthday: birthday, isFavorite: isFavorite, contact: nil)
+//    }
     
     func addMeeting(contact: EventStruct, date: Date, feeling: Feelings, describe: String) -> ContactStruct {
         let updatedContact = contact.addMeeting(date: date, feeling: feeling, describe: describe)
-        return ContactStruct(name: name, birthday: birthday, isFavorite: isFavorite, contact: updatedContact)
+        return ContactStruct(name: name, birthday: birthday, isFavorite: isFavorite, contact: updatedContact, record: record)
+    }
+    
+    func addRecord(metaData: Data) -> ContactStruct {
+        return ContactStruct(id: id, name: name, birthday: birthday, isFavorite: isFavorite, contact: contact, record: metaData)
     }
 }
 
@@ -149,5 +155,4 @@ enum FilterMainView: String, Codable, CaseIterable, Hashable {
     case alphabeticalOrder = "По алфавиту"
     case dueDateOrder = "По дате общения"
     case favoritesOrder = "Избранные"
-    case withoutTracker = "Без отслеживания"
 }

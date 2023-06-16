@@ -32,13 +32,11 @@ struct ContactCellView: View {
                         .foregroundColor(.theme.standard)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                if let contact = contact.contact {
-                    Text(vm.daysFromLastEventCell(lastEvent: contact.lastContact))
-                        .foregroundColor(vm.getNextEventDate(component: contact.component, lastContact: contact.lastContact, interval: contact.distance) > Date() ? .theme.green : .theme.red)
-                        .font(.caption)
-                        .bold()
-                        .padding(.trailing)
-                }
+                Text(vm.daysFromLastEventCell(lastEvent: contact.contact.lastContact))
+                    .foregroundColor(vm.getNextEventDate(component: contact.contact.component, lastContact: contact.contact.lastContact, interval: contact.contact.distance) > Date() ? .theme.green : .theme.red)
+                    .font(.caption)
+                    .bold()
+                    .padding(.trailing)
                 VStack {
                     if contact.isFavorite {
                         Image(systemName: "star.fill")

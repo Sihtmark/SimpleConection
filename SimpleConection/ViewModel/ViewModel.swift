@@ -19,19 +19,215 @@ class ViewModel: ObservableObject {
     @Published var email = ""
     @Published var telephone = ""
     @Published var permissionStatus = false
-    @Published var contacts = [ContactStruct]() {
-        didSet {
-            saveContacts()
-        }
-    }
-    
-    let contactsKey = "items_list"
+    @Published var cache: NSCache<NSString, NSData>? = nil
+    @Published var contacts = [ContactStruct]()
     
     init() {
-        fetchContacts()
         requestPermission()
         getiCloudStatus()
         fetchiCloudUserRecordID()
+        fetchContactsFromiCloudKit()
+    }
+    
+    func createNewContact(name: String, birthday: Date, distance: Int, component: Components, lastContact: Date, reminder: Bool, feeling: Feelings, describe: String, isFavorite: Bool) {
+        
+        let newContact = EventStruct(
+            distance: distance,
+            component: component,
+            lastContact: lastContact,
+            reminder: reminder,
+            allEvents: [ Meeting(
+                date: lastContact,
+                feeling: feeling,
+                describe: describe)
+            ]
+        )
+        
+        let newCustomer = ContactStruct(
+            name: name,
+            birthday: birthday,
+            isFavorite: isFavorite,
+            contact: newContact,
+            record: sampleData()!
+        )
+        
+        if reminder {
+            setNotification(contactStruct: newCustomer)
+        }
+        
+        saveContactToiCloudKit(contact: newCustomer)
+        fetchContactsFromiCloudKit()
+    }
+    
+    func updateContact(client: ContactStruct, name: String, birthday: Date, isFavorite: Bool, distance: Int, component: Components, lastContact: Date, reminder: Bool, feeling: Feelings, describe: String) {
+//        if let index = contacts.firstIndex(where: {$0.id == client.id}) {
+//            contacts[index] = client.updateInfo(name: name, birthday: birthday, isFavorite: isFavorite, distance: distance, component: component, reminder: reminder)
+//            updateContactIniCloudKit(contact: contacts[index])
+//        }
+        updateContactIniCloudKit(contact: client.updateInfo(name: name, birthday: birthday, isFavorite: isFavorite, distance: distance, component: component, reminder: reminder))
+        fetchContactsFromiCloudKit()
+    }
+    
+    func updateEvent(contact: ContactStruct) {
+//        if let index = contacts.firstIndex(where: {$0.id == contact.id}) {
+//            contacts[index] = contact.changeLastContact(date: Date())
+//        }
+        updateContactIniCloudKit(contact: contact.changeLastContact(date: Date()))
+        fetchContactsFromiCloudKit()
+    }
+    
+//    func deleteContact(indexSet: IndexSet) {
+//        contacts.remove(atOffsets: indexSet)
+//    }
+    
+    // ‼️
+    func moveContact(from: IndexSet, to: Int) {
+        contacts.move(fromOffsets: from, toOffset: to)
+    }
+    
+    func updateMeeting(contact: ContactStruct, meeting: Meeting, date: Date, feeling: Feelings, describe: String) {
+        var changedContact = contact
+        if let i = contact.contact.allEvents.firstIndex(where: {$0.id == meeting.id}) {
+            changedContact.contact.allEvents[i].date = date
+            changedContact.contact.allEvents[i].feeling = feeling
+            changedContact.contact.allEvents[i].describe = describe
+        }
+        updateContactIniCloudKit(contact: changedContact)
+        fetchContactsFromiCloudKit()
+    }
+    
+    func deleteMeeting(contact: ContactStruct, meeting: Meeting) {
+        var changedContact = contact
+        if let i = contact.contact.allEvents.firstIndex(where: {$0.id == meeting.id}) {
+            changedContact.contact.allEvents.remove(at: i)
+        }
+        updateContactIniCloudKit(contact: changedContact)
+        fetchContactsFromiCloudKit()
+    }
+    
+    func toggleFavorite(contact: ContactStruct) {
+        if let index = contacts.firstIndex(where: {$0.id == contact.id}) {
+            contacts[index].isFavorite.toggle()
+            updateContactIniCloudKit(contact: contacts[index])
+        }
+        var changedContact = contact
+        changedContact.isFavorite.toggle()
+        updateContactIniCloudKit(contact: changedContact)
+        fetchContactsFromiCloudKit()
+    }
+    
+    func addMeeting(contact: ContactStruct, date: Date, feeling: Feelings, describe: String) {
+        let newMeeting = Meeting(date: date, feeling: feeling, describe: describe)
+        var changedContact = contact
+        changedContact.contact.allEvents.append(newMeeting)
+        changedContact.contact.lastContact = changedContact.contact.lastContact < date ? date : changedContact.contact.lastContact
+        if changedContact.contact.reminder {
+            setNotification(contactStruct: changedContact)
+        }
+        updateContactIniCloudKit(contact: changedContact)
+        fetchContactsFromiCloudKit()
+    }
+    
+    enum CloudKitError: String, LocalizedError {
+        case iCloudAccountNotFound
+        case iCloudAccountNotDetermined
+        case iCloudAccountRestricted
+        case iCloudAccountTemporarilyUnavailable
+        case iCloudAccountUnknown
+    }
+    
+    func saveContactToiCloudKit(contact: ContactStruct) {
+        let record = CKRecord(recordType: "Contacts")
+        let contactWithRecord = contact.addRecord(metaData: returnRecordAsData(record))
+        if let encodedData = try? JSONEncoder().encode(contactWithRecord) {
+            record["data"] = encodedData
+            saveItemToiCloudKit(record: record)
+        }
+    }
+    
+    private func saveItemToiCloudKit(record: CKRecord) {
+        CKContainer.default().publicCloudDatabase.save(record) {[weak self] returnedRecord, returnedError in
+            DispatchQueue.main.async {
+                self?.fetchContactsFromiCloudKit()
+            }
+        }
+    }
+    
+    func fetchContactsFromiCloudKit() {
+        let predicate = NSPredicate(value: true)
+        let query = CKQuery(recordType: "Contacts", predicate: predicate)
+        let queryOperation = CKQueryOperation(query: query)
+        
+        var returnedItems = [ContactStruct]()
+        
+        queryOperation.recordMatchedBlock = { returnedRecordID, returnedRecordResult in
+            switch returnedRecordResult {
+            case .success(let record):
+                if let contact = record["data"] as? Data {
+                    guard let savedItem = try? JSONDecoder().decode(ContactStruct.self, from: contact) else {return}
+                    returnedItems.append(savedItem)
+                }
+            case .failure(let error):
+                print("Error recordMatchedBlock: \(error.localizedDescription)")
+            }
+        }
+        
+        queryOperation.queryResultBlock = { [weak self] returnedResult in
+            print("RETURNED RESULT: \(returnedResult)")
+            DispatchQueue.main.async {
+                self?.contacts = returnedItems
+            }
+        }
+        addOperation(operation: queryOperation)
+    }
+    
+    func addOperation(operation: CKDatabaseOperation) {
+        CKContainer.default().publicCloudDatabase.add(operation)
+    }
+    
+    func updateContactIniCloudKit(contact: ContactStruct) {
+        guard let record = try? extractCloudRecord(from: contact), let encodedData = try? JSONEncoder().encode(contact) else {
+            print("‼️ We cannot update \(contact.name) in CloudKit. \(contact.name) doesn't contain record ‼️")
+            return
+        }
+        record["data"] = encodedData
+        saveItemToiCloudKit(record: record)
+    }
+    
+    func deleteContactIniCloudKit(indexSet: IndexSet) {
+        guard let index = indexSet.first else {return}
+        let contact = contacts[index]
+        try? CKContainer.default().publicCloudDatabase.delete(withRecordID: extractCloudRecord(from: contact)!.recordID) { returnedRecordID, returnedError in
+//            DispatchQueue.main.async {
+//                self?.contacts.remove(at: index)
+//            }
+        }
+        fetchContactsFromiCloudKit()
+    }
+    
+    // Remote Records
+    func storeCloudRecord(_ record: CKRecord, on contact: ContactStruct) {
+        let coder = NSKeyedArchiver(requiringSecureCoding: true)
+        record.encodeSystemFields(with: coder)
+        if let index = contacts.firstIndex(where: {$0.id == contact.id}) {
+            contacts[index] = contact.addRecord(metaData: coder.encodedData)
+        }
+    }
+    
+    // Remote Records
+    func returnRecordAsData(_ record: CKRecord) -> Data {
+        let coder = NSKeyedArchiver(requiringSecureCoding: true)
+        record.encodeSystemFields(with: coder)
+        return coder.encodedData
+    }
+    
+    // Remote Records
+    func extractCloudRecord(from contact: ContactStruct) throws -> CKRecord? {
+        let metadata = contact.record
+        let coder = try NSKeyedUnarchiver(forReadingFrom: metadata)
+        let record = CKRecord(coder: coder)
+        coder.finishDecoding()
+        return record
     }
     
     func getiCloudStatus() {
@@ -94,78 +290,7 @@ class ViewModel: ObservableObject {
         }
     }
     
-    func fetchContacts() {
-        guard let data = UserDefaults.standard.data(forKey: contactsKey), let savedItems = try? JSONDecoder().decode([ContactStruct].self, from: data) else {return}
-        self.contacts = savedItems
-    }
     
-    func saveContacts() {
-        if let encodedData = try? JSONEncoder().encode(contacts) {
-            UserDefaults.standard.set(encodedData, forKey: contactsKey)
-        }
-    }
-    
-    func createNewContact(name: String, birthday: Date, distance: Int, component: Components, lastContact: Date, reminder: Bool, meetingTracker: Bool, feeling: Feelings, describe: String, isFavorite: Bool) {
-        
-        let newContact = EventStruct(
-            distance: distance,
-            component: component,
-            lastContact: lastContact,
-            reminder: reminder,
-            allEvents: [ Meeting(
-                date: lastContact,
-                feeling: feeling,
-                describe: describe)
-            ]
-        )
-        
-        let newCustomer = ContactStruct(
-            name: name,
-            birthday: birthday,
-            isFavorite: isFavorite,
-            contact: meetingTracker ? newContact : nil
-        )
-        
-        if meetingTracker && reminder {
-            setNotification(contactStruct: newCustomer)
-        }
-        contacts.append(newCustomer)
-    }
-    
-    func updateContact(client: ContactStruct, name: String, birthday: Date, isFavorite: Bool, distance: Int, component: Components, lastContact: Date, reminder: Bool, meetingTracker: Bool, feeling: Feelings, describe: String) {
-        if let index = contacts.firstIndex(where: {$0.id == client.id}) {
-            if meetingTracker {
-                if client.contact != nil {
-                    contacts[index] = client.updateInfo(name: name, birthday: birthday, isFavorite: isFavorite, distance: distance, component: component, reminder: reminder)
-                    saveContacts()
-                } else {
-                    contacts[index] = client.updateAndCreateEvent(name: name, birthday: birthday, isFavorite: isFavorite, distance: distance, component: component, lastContact: lastContact, reminder: reminder, feeling: feeling, describe: describe)
-                    saveContacts()
-                }
-            } else {
-                if client.contact != nil {
-                    contacts[index] = client.updateInfoAndDeleteEvent(name: name, birthday: birthday, isFavorite: isFavorite)
-                } else {
-                    contacts[index] = client.updateWithoutEvent(name: name, birthday: birthday, isFavorite: isFavorite)
-                }
-            }
-        }
-        fetchContacts()
-    }
-    
-    func updateEvent(contact: ContactStruct) {
-        if let index = contacts.firstIndex(where: {$0.id == contact.id}) {
-            contacts[index] = contact.changeLastContact(date: Date())
-        }
-    }
-    
-    func deleteContact(indexSet: IndexSet) {
-        contacts.remove(atOffsets: indexSet)
-    }
-    
-    func moveContact(from: IndexSet, to: Int) {
-        contacts.move(fromOffsets: from, toOffset: to)
-    }
     
     func extractDate(date: Date, format: String) -> String {
         let formatter = DateFormatter()
@@ -245,41 +370,6 @@ class ViewModel: ObservableObject {
         }
     }
     
-    func updateMeeting(contact: ContactStruct, meeting: Meeting, date: Date, feeling: Feelings, describe: String) {
-        if let index = contacts.firstIndex(where: {$0.id == contact.id}) {
-            if let i = contacts[index].contact!.allEvents.firstIndex(where: {$0.id == meeting.id}) {
-                contacts[index].contact!.allEvents[i].date = date
-                contacts[index].contact!.allEvents[i].feeling = feeling
-                contacts[index].contact!.allEvents[i].describe = describe
-            }
-        }
-    }
-    
-    func deleteMeeting(contact: ContactStruct, meeting: Meeting) {
-        if let index = contacts.firstIndex(where: {$0.id == contact.id}) {
-            if let i = contacts[index].contact!.allEvents.firstIndex(where: {$0.id == meeting.id}) {
-                contacts[index].contact!.allEvents.remove(at: i)
-            }
-        }
-    }
-    
-    func toggleFavorite(contact: ContactStruct) {
-        if let index = contacts.firstIndex(where: {$0.id == contact.id}) {
-            contacts[index].isFavorite.toggle()
-        }
-    }
-    
-    func addMeeting(contact: ContactStruct, date: Date, feeling: Feelings, describe: String) {
-        let newMeeting = Meeting(date: date, feeling: feeling, describe: describe)
-        if let index = contacts.firstIndex(where: {$0.id == contact.id}) {
-            contacts[index].contact!.allEvents.append(newMeeting)
-            contacts[index].contact!.lastContact = contacts[index].contact!.lastContact < date ? date : contacts[index].contact!.lastContact
-            if contacts[index].contact!.reminder {
-                setNotification(contactStruct: contacts[index])
-            }
-        }
-    }
-    
     func listOrder(order: FilterMainView) -> [ContactStruct] {
         switch order {
         case .standardOrder:
@@ -287,11 +377,9 @@ class ViewModel: ObservableObject {
         case .alphabeticalOrder:
             return contacts.sorted(by: {$0.name > $1.name})
         case .dueDateOrder:
-            return contacts.filter{$0.contact != nil}.sorted(by: {$0.contact!.getNextEventDate() < $1.contact!.getNextEventDate()})
+            return contacts.sorted(by: {$0.contact.getNextEventDate() < $1.contact.getNextEventDate()})
         case .favoritesOrder:
             return contacts.filter{$0.isFavorite}
-        case .withoutTracker:
-            return contacts.filter{$0.contact == nil}
         }
     }
     
@@ -301,21 +389,17 @@ class ViewModel: ObservableObject {
     
     func setNotification(contactStruct: ContactStruct) {
         nm.cancelNotification(id: contactStruct.id)
-        if let contact = contactStruct.contact {
-            let date = getNextEventDate(component: contact.component, lastContact: contact.lastContact, interval: contact.distance)
-            let calendar = Calendar.current
-            let year = calendar.component(.year, from: date)
-            let month = calendar.component(.month, from: date)
-            let day = calendar.component(.day, from: date)
-            nm.scheduleNotification(contact: contactStruct, year: year, month: month, day: day)
-        }
+        let contact = contactStruct.contact
+        let date = getNextEventDate(component: contact.component, lastContact: contact.lastContact, interval: contact.distance)
+        let calendar = Calendar.current
+        let year = calendar.component(.year, from: date)
+        let month = calendar.component(.month, from: date)
+        let day = calendar.component(.day, from: date)
+        nm.scheduleNotification(contact: contactStruct, year: year, month: month, day: day)
     }
     
-    enum CloudKitError: String, LocalizedError {
-        case iCloudAccountNotFound
-        case iCloudAccountNotDetermined
-        case iCloudAccountRestricted
-        case iCloudAccountTemporarilyUnavailable
-        case iCloudAccountUnknown
+    func sampleData() -> Data? {
+        let encodedData = try? JSONEncoder().encode("contact")
+        return encodedData
     }
 }

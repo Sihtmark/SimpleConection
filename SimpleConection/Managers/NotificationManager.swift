@@ -38,18 +38,18 @@ class NotificationManager {
         let calendarTrigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
 
         let request = UNNotificationRequest(
-            identifier: contact.id.uuidString,
+            identifier: contact.id,
             content: content,
             trigger: calendarTrigger)
         UNUserNotificationCenter.current().add(request)
     }
     
-    func cancelNotification(id: UUID) {
+    func cancelNotification(id: String) {
         
         // will cancel any upcoming notifications
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [id.uuidString])
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [id])
         
         // remove from notification-center
-        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [id.uuidString])
+        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [id])
     }
 }

@@ -15,7 +15,6 @@ struct AddNewContactView: View {
     @State private var selectedDate = Date()
     @Environment(\.dismiss) var dismiss
     @State private var lastMeeting = Date()
-    @State private var meetingTracker = true
     @State private var component = Components.week
     @State private var distance = 2
     @State private var reminder = true
@@ -46,9 +45,7 @@ struct AddNewContactView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 30) {
                 mainSection
-                if meetingTracker {
-                    meetingTrackerSection
-                }
+                meetingTrackerSection
                 saveButton
             }
         }
@@ -108,9 +105,6 @@ extension AddNewContactView {
             DatePicker("День рождения:", selection: $selectedDate, in: dateRange, displayedComponents: .date)
                 .environment(\.locale, Locale.init(identifier: "ru"))
                 .foregroundColor(.theme.standard)
-            Toggle("Отслеживать общение", isOn: $meetingTracker)
-                .foregroundColor(.theme.standard)
-                .padding(.trailing, 5)
         }
     }
     var meetingTrackerSection: some View {
@@ -186,7 +180,7 @@ extension AddNewContactView {
         HStack {
             Spacer()
             Button {
-                vm.createNewContact(name: name, birthday: selectedDate, distance: distance, component: component, lastContact: lastMeeting, reminder: reminder, meetingTracker: meetingTracker, feeling: feeling, describe: describe, isFavorite: isFavorite)
+                vm.createNewContact(name: name, birthday: selectedDate, distance: distance, component: component, lastContact: lastMeeting, reminder: reminder, feeling: feeling, describe: describe, isFavorite: isFavorite)
                 dismiss()
             } label: {
                 Text("Сохранить")

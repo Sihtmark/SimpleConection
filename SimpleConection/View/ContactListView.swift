@@ -61,14 +61,12 @@ struct ContactListView: View {
                     }
                     .listRowSeparator(.hidden)
                     .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                        if customer.contact != nil {
-                            Button {
-                                isAdding = customer
-                            } label: {
-                                Label("Контакт", systemImage: "person.fill.checkmark")
-                            }
-                            .tint(.green)
+                        Button {
+                            isAdding = customer
+                        } label: {
+                            Label("Контакт", systemImage: "person.fill.checkmark")
                         }
+                        .tint(.green)
                     }
                     .swipeActions(edge: .leading, allowsFullSwipe: false, content: {
                         Button {
@@ -82,7 +80,7 @@ struct ContactListView: View {
                     })
                     .listRowSeparator(.hidden)
                 }
-                .onDelete(perform: vm.deleteContact)
+                .onDelete(perform: vm.deleteContactIniCloudKit)
                 .onMove(perform: vm.moveContact)
             }
             .ignoresSafeArea(edges: .bottom)
@@ -118,9 +116,6 @@ struct ContactListView: View {
                 }
                 Button("Только избранные") {
                     filter = .favoritesOrder
-                }
-                Button("Без отслеживания") {
-                    filter = .withoutTracker
                 }
                 Button("Без фильтра", role: .destructive) {
                     filter = .standardOrder
@@ -196,9 +191,9 @@ extension ContactListView {
                         Spacer()
                         Button {
                             vm.addMeeting(contact: isAdding!, date: date, feeling: feeling, describe: describe)
-                            isAdding!.contact!.lastContact = isAdding!.contact!.allEvents.map{$0.date}.max()!
+                            isAdding!.contact.lastContact = isAdding!.contact.allEvents.map{$0.date}.max()!
                             if let i = vm.contacts.firstIndex(where: {$0.id == isAdding!.id}) {
-                                vm.contacts[i].contact!.lastContact = isAdding!.contact!.allEvents.map{$0.date}.max()!
+                                vm.contacts[i].contact.lastContact = isAdding!.contact.allEvents.map{$0.date}.max()!
                             }
                             isAdding = nil
                             date = Date()

@@ -41,10 +41,7 @@ struct ContactView: View {
     var body: some View {
         ScrollView {
             titleSection
-                .padding(.top, 20)
-            if contact.contact != nil {
-                eventsSection
-            }
+            eventsSection
         }
         .ignoresSafeArea(edges: .bottom)
         .scrollIndicators(ScrollIndicatorVisibility.hidden)
@@ -111,38 +108,37 @@ extension ContactView {
                     .font(.title)
                     .foregroundColor(.theme.standard)
             }
-            if let contact = contact.contact {
-                VStack(spacing: 5) {
-                    Text("Последнее общение \(dateFormatter.string(from: contact.lastContact))")
-                    Text(vm.daysFromLastEvent(lastEvent: contact.lastContact))
-                }
-                .font(.callout)
-                .foregroundColor(vm.getNextEventDate(component: contact.component, lastContact: contact.lastContact, interval: contact.distance) > Date() ? .theme.green : .theme.red)
-                ZStack {
-                    Button {
-                        isFavorite.toggle()
-                        vm.toggleFavorite(contact: self.contact)
-                    } label: {
-                        ZStack {
-                            Image(systemName: isFavorite ? "star.fill" : "star")
-                                .foregroundColor(.yellow)
-                        }
+            VStack(spacing: 5) {
+                Text("Последнее общение \(dateFormatter.string(from: contact.contact.lastContact))")
+                Text(vm.daysFromLastEvent(lastEvent: contact.contact.lastContact))
+            }
+            .font(.callout)
+            .foregroundColor(vm.getNextEventDate(component: contact.contact.component, lastContact: contact.contact.lastContact, interval: contact.contact.distance) > Date() ? .theme.green : .theme.red)
+            ZStack {
+                Button {
+                    isFavorite.toggle()
+                    vm.toggleFavorite(contact: self.contact)
+                } label: {
+                    ZStack {
+                        Image(systemName: isFavorite ? "star.fill" : "star")
+                            .foregroundColor(.yellow)
                     }
-                    .offset(x: 100)
-                    Button {
-                        isAdding.toggle()
-                    } label: {
-                        Label("Добавить", systemImage: "plus")
-                    }
-                    .buttonStyle(.bordered)
-                .padding(.top, 5)
                 }
+                .offset(x: 100)
+                Button {
+                    isAdding.toggle()
+                } label: {
+                    Label("Добавить", systemImage: "plus")
+                }
+                .buttonStyle(.bordered)
+            .padding(.top, 5)
             }
         }
+        .padding(.top, 20)
     }
     
     var eventsSection: some View {
-        ForEach(contact.contact!.allEvents.sorted(by: {$0.date > $1.date})) { event in
+        ForEach(contact.contact.allEvents.sorted(by: {$0.date > $1.date})) { event in
             NavigationLink {
                 MeetingView(meeting: event, contact: $contact)
             } label: {
@@ -216,10 +212,10 @@ extension ContactView {
                         Spacer()
                         Button {
                             vm.addMeeting(contact: contact, date: date, feeling: feeling, describe: describe)
-                            contact = contact.addMeeting(contact: contact.contact!, date: date, feeling: feeling, describe: describe)
-                            contact.contact!.lastContact = contact.contact!.allEvents.map{$0.date}.max()!
+                            contact = contact.addMeeting(contact: contact.contact, date: date, feeling: feeling, describe: describe)
+                            contact.contact.lastContact = contact.contact.allEvents.map{$0.date}.max()!
                             if let i = vm.contacts.firstIndex(where: {$0.id == contact.id}) {
-                                vm.contacts[i].contact!.lastContact = contact.contact!.allEvents.map{$0.date}.max()!
+                                vm.contacts[i].contact.lastContact = contact.contact.allEvents.map{$0.date}.max()!
                             }
                             isAdding.toggle()
                             date = Date()

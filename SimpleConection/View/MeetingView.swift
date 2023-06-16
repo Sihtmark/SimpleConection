@@ -72,13 +72,13 @@ struct MeetingView: View {
                     Spacer()
                     Button {
                         vm.updateMeeting(contact: contact, meeting: meeting, date: date, feeling: feeling, describe: describe)
-                        if let index = contact.contact!.allEvents.firstIndex(where: {$0.id == meeting.id}) {
-                            contact.contact!.allEvents[index] = contact.contact!.allEvents[index].updateMeeting(date: date, feeling: feeling, describe: describe)
+                        if let index = contact.contact.allEvents.firstIndex(where: {$0.id == meeting.id}) {
+                            contact.contact.allEvents[index] = contact.contact.allEvents[index].updateMeeting(date: date, feeling: feeling, describe: describe)
                         }
-                        contact.contact!.lastContact = contact.contact!.allEvents.map{$0.date}.max()!
+                        contact.contact.lastContact = contact.contact.allEvents.map{$0.date}.max()!
                         dismiss()
                         if let i = vm.contacts.firstIndex(where: {$0.id == contact.id}) {
-                            vm.contacts[i].contact!.lastContact = contact.contact!.allEvents.map{$0.date}.max()!
+                            vm.contacts[i].contact.lastContact = contact.contact.allEvents.map{$0.date}.max()!
                         }
                     } label: {
                         Text("Сохранить")
@@ -93,12 +93,12 @@ struct MeetingView: View {
                     Spacer()
                     Button(role: .destructive) {
                         vm.deleteMeeting(contact: contact, meeting: meeting)
-                        if let index = contact.contact!.allEvents.firstIndex(where: {$0.id == meeting.id}) {
-                            contact.contact!.allEvents.remove(at: index)
+                        if let index = contact.contact.allEvents.firstIndex(where: {$0.id == meeting.id}) {
+                            contact.contact.allEvents.remove(at: index)
                         }
-                        contact.contact!.lastContact = contact.contact!.allEvents.map{$0.date}.max()!
+                        contact.contact.lastContact = contact.contact.allEvents.map{$0.date}.max()!
                         if let i = vm.contacts.firstIndex(where: {$0.id == contact.id}) {
-                            vm.contacts[i].contact!.lastContact = contact.contact!.allEvents.map{$0.date}.max()!
+                            vm.contacts[i].contact.lastContact = contact.contact.allEvents.map{$0.date}.max()!
                         }
                         dismiss()
                     } label: {
@@ -125,13 +125,13 @@ struct MeetingView: View {
     }
 }
 
-//struct EventView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        MeetingView(meeting: sampleContact.contact!.allEvents.first!, contact: sampleContact)
-//            .environmentObject(ViewModel())
-//            .preferredColorScheme(.light)
-//        MeetingView(meeting: sampleContact.contact!.allEvents.first!, contact: sampleContact)
-//            .environmentObject(ViewModel())
-//            .preferredColorScheme(.dark)
-//    }
-//}
+struct EventView_Previews: PreviewProvider {
+    static var previews: some View {
+        MeetingView(meeting: sampleContact.contact.allEvents.first!, contact: .constant(sampleContact))
+            .environmentObject(ViewModel())
+            .preferredColorScheme(.light)
+        MeetingView(meeting: sampleContact.contact.allEvents.first!, contact: .constant(sampleContact))
+            .environmentObject(ViewModel())
+            .preferredColorScheme(.dark)
+    }
+}
