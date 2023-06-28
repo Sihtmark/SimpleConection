@@ -10,6 +10,7 @@ import UIKit
 
 struct AddNewContactView: View {
     
+    @Environment(\.managedObjectContext) var moc
     @EnvironmentObject private var vm: ViewModel
     @State private var name = ""
     @State private var selectedDate = Date()
@@ -180,7 +181,7 @@ extension AddNewContactView {
         HStack {
             Spacer()
             Button {
-                vm.createNewContact(name: name, birthday: selectedDate, distance: distance, component: component, lastContact: lastMeeting, reminder: reminder, feeling: feeling, describe: describe, isFavorite: isFavorite)
+                vm.createContact(name: name, birthday: selectedDate, isFavorite: isFavorite, distance: distance, component: component, lastContact: lastMeeting, reminder: reminder, meetingDate: lastMeeting, meetingDescribe: describe, meetingFeeling: feeling, context: moc)
                 dismiss()
             } label: {
                 Text("Сохранить")

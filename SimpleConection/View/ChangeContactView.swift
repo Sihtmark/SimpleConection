@@ -9,11 +9,12 @@ import SwiftUI
 
 struct ChangeContactView: View {
     
+    @Environment(\.managedObjectContext) var moc
     @EnvironmentObject private var vm: ViewModel
-    @Binding var contact: ContactStruct
+    @Binding var contact: ContactEntity
     @Environment(\.dismiss) var dismiss
     @State private var name = ""
-    @State private var selectedDate = Date()
+    @State private var birthday = Date()
     @State private var lastMeeting = Date()
     @State private var component = Components.week
     @State private var distance = 2
@@ -60,12 +61,12 @@ struct ChangeContactView: View {
             }
         }
         .onAppear {
-            name = contact.name
-            selectedDate = contact.birthday
-            lastMeeting = contact.contact.lastContact
-            component = contact.contact.component
-            distance = contact.contact.distance
-            reminder = contact.contact.reminder
+            name = contact.name!
+            birthday = contact.birthday!
+            lastMeeting = contact.lastContact ?? Date()
+            component = Components(rawValue: contact.component!)!
+            distance = Int(contact.distance)
+            reminder = contact.reminder
         }
         .frame(maxWidth: 550)
         .padding()
@@ -87,12 +88,14 @@ struct ChangeContactView: View {
 struct ChangeContactView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
-            ChangeContactView(contact: .constant(sampleContact))
+            ChangeContactView(contact: .constant(ViewModel().fetchedContacts.first!))
+                .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
                 .preferredColorScheme(.dark)
         }
         .environmentObject(ViewModel())
         NavigationStack {
-            ChangeContactView(contact: .constant(sampleContact))
+            ChangeContactView(contact: .constant(ViewModel().fetchedContacts.first!))
+                .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
                 .preferredColorScheme(.light)
         }
         .environmentObject(ViewModel())
@@ -106,14 +109,14 @@ extension ChangeContactView {
                 .foregroundColor(.theme.standard)
                 .textFieldStyle(.roundedBorder)
                 .autocorrectionDisabled()
-            DatePicker("День рождения:", selection: $selectedDate, in: dateRange, displayedComponents: .date)
+            DatePicker("День рождения:", selection: $birthday, in: dateRange, displayedComponents: .date)
                 .environment(\.locale, Locale.init(identifier: "ru"))
                 .foregroundColor(.theme.standard)
         }
     }
     var meetingTrackerSection: some View {
         VStack(alignment: .leading, spacing: 30) {
-            if contact.contact.allEvents.isEmpty {
+            if contact.meetings == nil {
                 DatePicker("Последнее общение:", selection: $lastMeeting, in: dateRange, displayedComponents: .date)
                     .environment(\.locale, Locale.init(identifier: "ru"))
                     .foregroundColor(.theme.standard)
@@ -186,12 +189,15 @@ extension ChangeContactView {
         HStack {
             Spacer()
             Button {
-                vm.updateContact(client: contact, name: name, birthday: selectedDate, isFavorite: contact.isFavorite, distance: distance, component: component, lastContact: lastMeeting, reminder: reminder, feeling: feeling, describe: describe)
-                contact = contact.updateInfo(name: name, birthday: selectedDate, isFavorite: contact.isFavorite, distance: distance, component: component, reminder: reminder)
+                vm.editContact(contact: contact, name: name, birthday: birthday, isFavorite: contact.isFavorite, distance: distance, component: component, lastContact: (contact.meetings == nil ? lastMeeting : contact.lastContact) ?? Date(), reminder: reminder, context: moc)
+                if contact.meetings == nil {
+                    vm.createMeeting(contact: contact, meetingDate: lastMeeting, meetingDescribe: describe, meetingFeeling: feeling, context: moc)
+                }
                 if reminder {
-                    vm.setNotification(contactStruct: contact)
+                    vm.deleteNotification(contact: contact)
+                    vm.setNotification(contact: contact)
                 } else {
-                    vm.deleteNotification(contactStruct: contact)
+                    vm.deleteNotification(contact: contact)
                 }
                 dismiss()
             } label: {

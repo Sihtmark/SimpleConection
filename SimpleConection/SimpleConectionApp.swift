@@ -12,6 +12,8 @@ struct SimpleConectionApp: App {
     
     @StateObject private var vm = ViewModel()
     
+    let persistenceController = PersistenceController.shared
+    
     init() {
         UINavigationBar.appearance().largeTitleTextAttributes = [.foregroundColor: UIColor(Color.theme.standard)]
         UINavigationBar.appearance().titleTextAttributes = [.foregroundColor: UIColor(Color.theme.standard)]
@@ -19,7 +21,9 @@ struct SimpleConectionApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContactListView().environmentObject(vm)
+            ContactListView()
+                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                .environmentObject(vm)
         }
     }
 }

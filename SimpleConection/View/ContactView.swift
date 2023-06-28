@@ -9,9 +9,14 @@ import SwiftUI
 
 struct ContactView: View {
     
+    @Environment(\.managedObjectContext) var moc
+    
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \MeetingEntity.date, ascending: true)], animation: .default)
+    var fetchedMeetings: FetchedResults<MeetingEntity>
+    
     @EnvironmentObject var vm: ViewModel
-    @Environment(\.dismiss) private var dismiss
-    @State var contact: ContactStruct
+    @Environment(\.dismiss) var dismiss
+    @State var contact: ContactEntity
     @State private var isEditing = false
     @State private var name = ""
     @State private var selectedDate = Date()
@@ -61,8 +66,8 @@ struct ContactView: View {
             addMeetingSheet
         })
         .onAppear {
-            name = contact.name
-            selectedDate = contact.birthday
+            name = contact.name!
+            selectedDate = contact.birthday!
             isFavorite = contact.isFavorite
         }
     }
@@ -71,12 +76,14 @@ struct ContactView: View {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
-            ContactView(contact: sampleContact)
+            ContactView(contact: ViewModel().fetchedContacts.first!)
+                .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
                 .preferredColorScheme(.dark)
         }
         .environmentObject(ViewModel())
         NavigationStack {
-            ContactView(contact: sampleContact)
+            ContactView(contact: ViewModel().fetchedContacts.first!)
+                .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
                 .preferredColorScheme(.light)
         }
         .environmentObject(ViewModel())
@@ -104,20 +111,20 @@ extension ContactView {
 //                }
 //            }
             VStack {
-                Text(contact.name)
+                Text(contact.name!)
                     .font(.title)
                     .foregroundColor(.theme.standard)
             }
             VStack(spacing: 5) {
-                Text("Последнее общение \(dateFormatter.string(from: contact.contact.lastContact))")
-                Text(vm.daysFromLastEvent(lastEvent: contact.contact.lastContact))
+                Text("Последнее общение \(dateFormatter.string(from: contact.lastContact ?? Date()))")
+                Text(vm.daysFromLastEvent(lastEvent: contact.lastContact ?? Date()))
             }
             .font(.callout)
-            .foregroundColor(vm.getNextEventDate(component: contact.contact.component, lastContact: contact.contact.lastContact, interval: contact.contact.distance) > Date() ? .theme.green : .theme.red)
+            .foregroundColor(vm.getNextEventDate(component: Components(rawValue: contact.component!)!, lastContact: contact.lastContact ?? Date(), interval: Int(contact.distance)) > Date() ? .theme.green : .theme.red)
             ZStack {
                 Button {
                     isFavorite.toggle()
-                    vm.toggleFavorite(contact: self.contact)
+                    vm.toggleFavorite(contact: self.contact, isFavorite: isFavorite, context: moc)
                 } label: {
                     ZStack {
                         Image(systemName: isFavorite ? "star.fill" : "star")
@@ -138,9 +145,9 @@ extension ContactView {
     }
     
     var eventsSection: some View {
-        ForEach(contact.contact.allEvents.sorted(by: {$0.date > $1.date})) { event in
+        ForEach(fetchedMeetings.filter({$0.contact == contact})) { meeting in
             NavigationLink {
-                MeetingView(meeting: event, contact: $contact)
+                MeetingView(meeting: meeting)
             } label: {
                 ZStack(alignment: .topLeading) {
                     RoundedRectangle(cornerRadius: 20)
@@ -148,11 +155,11 @@ extension ContactView {
                         .frame(maxWidth: .infinity)
                     VStack(alignment: .leading, spacing: 6) {
                         HStack() {
-                            Text(event.feeling.rawValue)
-                            Text(dateFormatter.string(from: event.date))
+                            Text(meeting.feeling!)
+                            Text(dateFormatter.string(from: meeting.date!))
                                 .foregroundColor(.theme.accent)
                         }
-                        Text(event.describe)
+                        Text(meeting.describe!)
                             .foregroundColor(.theme.secondaryText)
                             .font(.callout)
                             .multilineTextAlignment(.leading)
@@ -211,12 +218,9 @@ extension ContactView {
                     HStack {
                         Spacer()
                         Button {
-                            vm.addMeeting(contact: contact, date: date, feeling: feeling, describe: describe)
-                            contact = contact.addMeeting(contact: contact.contact, date: date, feeling: feeling, describe: describe)
-                            contact.contact.lastContact = contact.contact.allEvents.map{$0.date}.max()!
-                            if let i = vm.contacts.firstIndex(where: {$0.id == contact.id}) {
-                                vm.contacts[i].contact.lastContact = contact.contact.allEvents.map{$0.date}.max()!
-                            }
+                            vm.createMeeting(contact: contact, meetingDate: date, meetingDescribe: describe, meetingFeeling: feeling, context: moc)
+//                            contact = contact.addMeeting(contact: contact.contact, date: date, feeling: feeling, describe: describe)
+                            vm.updateLastContact(contact: contact, context: moc)
                             isAdding.toggle()
                             date = Date()
                             feeling = .notTooBad

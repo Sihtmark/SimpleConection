@@ -8,8 +8,15 @@
 import SwiftUI
 import EventKit
 import CloudKit
+import CoreData
 
 class ViewModel: ObservableObject {
+
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \ContactEntity.name, ascending: true)], animation: .default)
+    var fetchedContacts: FetchedResults<ContactEntity>
+
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \MeetingEntity.date, ascending: true)], animation: .default)
+    var fetchedMeetings: FetchedResults<MeetingEntity>
     
     let nm = NotificationManager()
     
@@ -19,215 +26,26 @@ class ViewModel: ObservableObject {
     @Published var email = ""
     @Published var telephone = ""
     @Published var permissionStatus = false
-    @Published var cache: NSCache<NSString, NSData>? = nil
-    @Published var contacts = [ContactStruct]()
     
     init() {
         requestPermission()
         getiCloudStatus()
         fetchiCloudUserRecordID()
-        fetchContactsFromiCloudKit()
     }
-    
-    func createNewContact(name: String, birthday: Date, distance: Int, component: Components, lastContact: Date, reminder: Bool, feeling: Feelings, describe: String, isFavorite: Bool) {
-        
-        let newContact = EventStruct(
-            distance: distance,
-            component: component,
-            lastContact: lastContact,
-            reminder: reminder,
-            allEvents: [ Meeting(
-                date: lastContact,
-                feeling: feeling,
-                describe: describe)
-            ]
-        )
-        
-        let newCustomer = ContactStruct(
-            name: name,
-            birthday: birthday,
-            isFavorite: isFavorite,
-            contact: newContact,
-            record: sampleData()!
-        )
-        
-        if reminder {
-            setNotification(contactStruct: newCustomer)
-        }
-        
-        saveContactToiCloudKit(contact: newCustomer)
-        fetchContactsFromiCloudKit()
-    }
-    
-    func updateContact(client: ContactStruct, name: String, birthday: Date, isFavorite: Bool, distance: Int, component: Components, lastContact: Date, reminder: Bool, feeling: Feelings, describe: String) {
-//        if let index = contacts.firstIndex(where: {$0.id == client.id}) {
-//            contacts[index] = client.updateInfo(name: name, birthday: birthday, isFavorite: isFavorite, distance: distance, component: component, reminder: reminder)
-//            updateContactIniCloudKit(contact: contacts[index])
-//        }
-        updateContactIniCloudKit(contact: client.updateInfo(name: name, birthday: birthday, isFavorite: isFavorite, distance: distance, component: component, reminder: reminder))
-        fetchContactsFromiCloudKit()
-    }
-    
-    func updateEvent(contact: ContactStruct) {
-//        if let index = contacts.firstIndex(where: {$0.id == contact.id}) {
-//            contacts[index] = contact.changeLastContact(date: Date())
-//        }
-        updateContactIniCloudKit(contact: contact.changeLastContact(date: Date()))
-        fetchContactsFromiCloudKit()
-    }
-    
-//    func deleteContact(indexSet: IndexSet) {
-//        contacts.remove(atOffsets: indexSet)
-//    }
     
     // ‼️
-    func moveContact(from: IndexSet, to: Int) {
-        contacts.move(fromOffsets: from, toOffset: to)
-    }
+//    func moveContact(from: IndexSet, to: Int) {
+//        fetchedContacts
+//        var contacts = fetchedContacts.map{$0}
+//        contacts.move(fromOffsets: from, toOffset: to)
+//    }
     
-    func updateMeeting(contact: ContactStruct, meeting: Meeting, date: Date, feeling: Feelings, describe: String) {
-        var changedContact = contact
-        if let i = contact.contact.allEvents.firstIndex(where: {$0.id == meeting.id}) {
-            changedContact.contact.allEvents[i].date = date
-            changedContact.contact.allEvents[i].feeling = feeling
-            changedContact.contact.allEvents[i].describe = describe
-        }
-        updateContactIniCloudKit(contact: changedContact)
-        fetchContactsFromiCloudKit()
-    }
-    
-    func deleteMeeting(contact: ContactStruct, meeting: Meeting) {
-        var changedContact = contact
-        if let i = contact.contact.allEvents.firstIndex(where: {$0.id == meeting.id}) {
-            changedContact.contact.allEvents.remove(at: i)
-        }
-        updateContactIniCloudKit(contact: changedContact)
-        fetchContactsFromiCloudKit()
-    }
-    
-    func toggleFavorite(contact: ContactStruct) {
-        if let index = contacts.firstIndex(where: {$0.id == contact.id}) {
-            contacts[index].isFavorite.toggle()
-            updateContactIniCloudKit(contact: contacts[index])
-        }
-        var changedContact = contact
-        changedContact.isFavorite.toggle()
-        updateContactIniCloudKit(contact: changedContact)
-        fetchContactsFromiCloudKit()
-    }
-    
-    func addMeeting(contact: ContactStruct, date: Date, feeling: Feelings, describe: String) {
-        let newMeeting = Meeting(date: date, feeling: feeling, describe: describe)
-        var changedContact = contact
-        changedContact.contact.allEvents.append(newMeeting)
-        changedContact.contact.lastContact = changedContact.contact.lastContact < date ? date : changedContact.contact.lastContact
-        if changedContact.contact.reminder {
-            setNotification(contactStruct: changedContact)
-        }
-        updateContactIniCloudKit(contact: changedContact)
-        fetchContactsFromiCloudKit()
-    }
-    
-    enum CloudKitError: String, LocalizedError {
-        case iCloudAccountNotFound
+    enum CloudKitError: String {
         case iCloudAccountNotDetermined
         case iCloudAccountRestricted
+        case iCloudAccountNotFound
         case iCloudAccountTemporarilyUnavailable
         case iCloudAccountUnknown
-    }
-    
-    func saveContactToiCloudKit(contact: ContactStruct) {
-        let record = CKRecord(recordType: "Contacts")
-        let contactWithRecord = contact.addRecord(metaData: returnRecordAsData(record))
-        if let encodedData = try? JSONEncoder().encode(contactWithRecord) {
-            record["data"] = encodedData
-            saveItemToiCloudKit(record: record)
-        }
-    }
-    
-    private func saveItemToiCloudKit(record: CKRecord) {
-        CKContainer.default().publicCloudDatabase.save(record) {[weak self] returnedRecord, returnedError in
-            DispatchQueue.main.async {
-                self?.fetchContactsFromiCloudKit()
-            }
-        }
-    }
-    
-    func fetchContactsFromiCloudKit() {
-        let predicate = NSPredicate(value: true)
-        let query = CKQuery(recordType: "Contacts", predicate: predicate)
-        let queryOperation = CKQueryOperation(query: query)
-        
-        var returnedItems = [ContactStruct]()
-        
-        queryOperation.recordMatchedBlock = { returnedRecordID, returnedRecordResult in
-            switch returnedRecordResult {
-            case .success(let record):
-                if let contact = record["data"] as? Data {
-                    guard let savedItem = try? JSONDecoder().decode(ContactStruct.self, from: contact) else {return}
-                    returnedItems.append(savedItem)
-                }
-            case .failure(let error):
-                print("Error recordMatchedBlock: \(error.localizedDescription)")
-            }
-        }
-        
-        queryOperation.queryResultBlock = { [weak self] returnedResult in
-            print("RETURNED RESULT: \(returnedResult)")
-            DispatchQueue.main.async {
-                self?.contacts = returnedItems
-            }
-        }
-        addOperation(operation: queryOperation)
-    }
-    
-    func addOperation(operation: CKDatabaseOperation) {
-        CKContainer.default().publicCloudDatabase.add(operation)
-    }
-    
-    func updateContactIniCloudKit(contact: ContactStruct) {
-        guard let record = try? extractCloudRecord(from: contact), let encodedData = try? JSONEncoder().encode(contact) else {
-            print("‼️ We cannot update \(contact.name) in CloudKit. \(contact.name) doesn't contain record ‼️")
-            return
-        }
-        record["data"] = encodedData
-        saveItemToiCloudKit(record: record)
-    }
-    
-    func deleteContactIniCloudKit(indexSet: IndexSet) {
-        guard let index = indexSet.first else {return}
-        let contact = contacts[index]
-        try? CKContainer.default().publicCloudDatabase.delete(withRecordID: extractCloudRecord(from: contact)!.recordID) { returnedRecordID, returnedError in
-//            DispatchQueue.main.async {
-//                self?.contacts.remove(at: index)
-//            }
-        }
-        fetchContactsFromiCloudKit()
-    }
-    
-    // Remote Records
-    func storeCloudRecord(_ record: CKRecord, on contact: ContactStruct) {
-        let coder = NSKeyedArchiver(requiringSecureCoding: true)
-        record.encodeSystemFields(with: coder)
-        if let index = contacts.firstIndex(where: {$0.id == contact.id}) {
-            contacts[index] = contact.addRecord(metaData: coder.encodedData)
-        }
-    }
-    
-    // Remote Records
-    func returnRecordAsData(_ record: CKRecord) -> Data {
-        let coder = NSKeyedArchiver(requiringSecureCoding: true)
-        record.encodeSystemFields(with: coder)
-        return coder.encodedData
-    }
-    
-    // Remote Records
-    func extractCloudRecord(from contact: ContactStruct) throws -> CKRecord? {
-        let metadata = contact.record
-        let coder = try NSKeyedUnarchiver(forReadingFrom: metadata)
-        let record = CKRecord(coder: coder)
-        coder.finishDecoding()
-        return record
     }
     
     func getiCloudStatus() {
@@ -289,8 +107,6 @@ class ViewModel: ObservableObject {
             }
         }
     }
-    
-    
     
     func extractDate(date: Date, format: String) -> String {
         let formatter = DateFormatter()
@@ -370,36 +186,167 @@ class ViewModel: ObservableObject {
         }
     }
     
-    func listOrder(order: FilterMainView) -> [ContactStruct] {
-        switch order {
-        case .standardOrder:
-            return contacts
-        case .alphabeticalOrder:
-            return contacts.sorted(by: {$0.name > $1.name})
-        case .dueDateOrder:
-            return contacts.sorted(by: {$0.contact.getNextEventDate() < $1.contact.getNextEventDate()})
-        case .favoritesOrder:
-            return contacts.filter{$0.isFavorite}
-        }
+    func deleteNotification(contact: ContactEntity) {
+        nm.cancelNotification(id: contact.id!.uuidString)
     }
     
-    func deleteNotification(contactStruct: ContactStruct) {
-        nm.cancelNotification(id: contactStruct.id)
-    }
-    
-    func setNotification(contactStruct: ContactStruct) {
-        nm.cancelNotification(id: contactStruct.id)
-        let contact = contactStruct.contact
-        let date = getNextEventDate(component: contact.component, lastContact: contact.lastContact, interval: contact.distance)
+    func setNotification(contact: ContactEntity) {
+        nm.cancelNotification(id: contact.id!.uuidString)
+        let date = getNextEventDate(component: Components(rawValue: contact.component!)!, lastContact: contact.lastContact!, interval: Int(contact.distance))
         let calendar = Calendar.current
         let year = calendar.component(.year, from: date)
         let month = calendar.component(.month, from: date)
         let day = calendar.component(.day, from: date)
-        nm.scheduleNotification(contact: contactStruct, year: year, month: month, day: day)
+        nm.scheduleNotification(contact: contact, year: year, month: month, day: day)
+    }
+}
+
+//MARK: Core Date CRUD functions
+extension ViewModel {
+    func createContact(name: String, birthday: Date, isFavorite: Bool, distance: Int, component: Components, lastContact: Date, reminder: Bool, meetingDate: Date, meetingDescribe: String, meetingFeeling: Feelings, context: NSManagedObjectContext) {
+        withAnimation {
+            let newContact = ContactEntity(context: context)
+            newContact.name = name
+            newContact.birthday = birthday
+            newContact.isFavorite = isFavorite
+            newContact.distance = Int16(distance)
+            newContact.component = component.rawValue
+            newContact.lastContact = lastContact
+            newContact.reminder = reminder
+            newContact.id = UUID()
+            
+            let newMeeting = MeetingEntity(context: context)
+            newMeeting.id = UUID()
+            newMeeting.date = meetingDate
+            newMeeting.describe = meetingDescribe
+            newMeeting.feeling = meetingFeeling.rawValue
+            
+            newContact.meetings!.adding(newMeeting)
+            newMeeting.contact = newContact
+            
+            do {
+                try context.save()
+            } catch {
+                // Replace this implementation with code to handle the error appropriately.
+                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
+                let nsError = error as NSError
+                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+            }
+        }
     }
     
-    func sampleData() -> Data? {
-        let encodedData = try? JSONEncoder().encode("contact")
-        return encodedData
+    func createMeeting(contact: ContactEntity, meetingDate: Date, meetingDescribe: String, meetingFeeling: Feelings, context: NSManagedObjectContext) {
+        withAnimation {
+            let newMeeting = MeetingEntity(context: context)
+            newMeeting.date = meetingDate
+            newMeeting.describe = meetingDescribe
+            newMeeting.feeling = meetingFeeling.rawValue
+            newMeeting.contact = contact
+            
+            do {
+                try context.save()
+            } catch {
+                // Replace this implementation with code to handle the error appropriately.
+                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
+                let nsError = error as NSError
+                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+            }
+        }
+    }
+    
+    func editContact(contact: ContactEntity, name: String, birthday: Date, isFavorite: Bool, distance: Int, component: Components, lastContact: Date, reminder: Bool, context: NSManagedObjectContext) {
+        withAnimation {
+            contact.name = name
+            contact.birthday = birthday
+            contact.isFavorite = isFavorite
+            contact.distance = Int16(distance)
+            contact.component = component.rawValue
+            contact.lastContact = lastContact
+            contact.reminder = reminder
+            
+            do {
+                try context.save()
+            } catch {
+                // Replace this implementation with code to handle the error appropriately.
+                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
+                let nsError = error as NSError
+                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+            }
+        }
+    }
+    
+    func editMeeting(meeting: MeetingEntity, meetingDate: Date, meetingDescribe: String, meetingFeeling: Feelings, context: NSManagedObjectContext) {
+        withAnimation {
+            meeting.date = meetingDate
+            meeting.describe = meetingDescribe
+            meeting.feeling = meetingFeeling.rawValue
+            
+            do {
+                try context.save()
+            } catch {
+                // Replace this implementation with code to handle the error appropriately.
+                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
+                let nsError = error as NSError
+                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+            }
+        }
+    }
+    
+    func deleteMeeting(offsets: IndexSet, context: NSManagedObjectContext) {
+        withAnimation {
+            offsets.map { fetchedMeetings[$0] }.forEach(context.delete)
+
+            do {
+                try context.save()
+            } catch {
+                // Replace this implementation with code to handle the error appropriately.
+                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
+                let nsError = error as NSError
+                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+            }
+        }
+    }
+    
+    func toggleFavorite(contact: ContactEntity, isFavorite: Bool, context: NSManagedObjectContext) {
+        withAnimation {
+            contact.isFavorite = isFavorite
+            
+            do {
+                try context.save()
+            } catch {
+                // Replace this implementation with code to handle the error appropriately.
+                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
+                let nsError = error as NSError
+                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+            }
+        }
+    }
+    
+    func updateLastContact(contact: ContactEntity, context: NSManagedObjectContext) {
+        var array = fetchedMeetings.filter({$0.contact == contact})
+        let date = array.map{$0.date!}.max()
+        contact.lastContact = date
+        
+        do {
+            try context.save()
+        } catch {
+            // Replace this implementation with code to handle the error appropriately.
+            // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
+            let nsError = error as NSError
+            fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+        }
+    }
+    
+    func deleteMeetingFromMeetingView(meeting: MeetingEntity, context: NSManagedObjectContext) {
+        context.delete(meeting)
+        
+        do {
+            try context.save()
+        } catch {
+            // Replace this implementation with code to handle the error appropriately.
+            // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
+            let nsError = error as NSError
+            fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+        }
     }
 }

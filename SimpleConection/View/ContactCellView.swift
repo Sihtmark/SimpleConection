@@ -10,7 +10,7 @@ import SwiftUI
 struct ContactCellView: View {
     
     @EnvironmentObject private var vm: ViewModel
-    let contact: ContactStruct
+    let contact: ContactEntity
     
     private var dateFormatter: DateFormatter {
         let formatter = DateFormatter()
@@ -26,14 +26,14 @@ struct ContactCellView: View {
                 .frame(height: 70)
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(contact.name)
+                    Text(contact.name!)
                         .bold()
                         .font(.headline)
                         .foregroundColor(.theme.standard)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                Text(vm.daysFromLastEventCell(lastEvent: contact.contact.lastContact))
-                    .foregroundColor(vm.getNextEventDate(component: contact.contact.component, lastContact: contact.contact.lastContact, interval: contact.contact.distance) > Date() ? .theme.green : .theme.red)
+                Text(vm.daysFromLastEventCell(lastEvent: contact.lastContact ?? Date()))
+                    .foregroundColor(vm.getNextEventDate(component: Components(rawValue: contact.component!)!, lastContact: contact.lastContact ?? Date(), interval: Int(contact.distance)) > Date() ? .theme.green : .theme.red)
                     .font(.caption)
                     .bold()
                     .padding(.trailing)
@@ -51,10 +51,12 @@ struct ContactCellView: View {
 
 struct CustomerCellView_Previews: PreviewProvider {
     static var previews: some View {
-        ContactCellView(contact: sampleContact)
+        ContactCellView(contact: ViewModel().fetchedContacts.first!)
+            .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
             .environmentObject(ViewModel())
             .preferredColorScheme(.dark)
-        ContactCellView(contact: sampleContact)
+        ContactCellView(contact: ViewModel().fetchedContacts.first!)
+            .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
             .environmentObject(ViewModel())
             .preferredColorScheme(.light)
     }
