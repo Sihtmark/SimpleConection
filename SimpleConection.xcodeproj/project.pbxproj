@@ -206,11 +206,11 @@
 			};
 			buildConfigurationList = A05991A02A3451EB0010D2ED /* Build configuration list for PBXProject "SimpleConection" */;
 			compatibilityVersion = "Xcode 14.0";
-			developmentRegion = ru;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				Base,
-				ru,
+				en,
 			);
 			mainGroup = A059919C2A3451EB0010D2ED;
 			productRefGroup = A05991A62A3451EB0010D2ED /* Products */;
