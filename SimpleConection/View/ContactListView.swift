@@ -9,8 +9,14 @@ import SwiftUI
 
 struct ContactListView: View {
     
+    @Environment(\.managedObjectContext) var moc
+    
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \ContactEntity.name, ascending: true)], animation: .default)
+    var fetchedContacts: FetchedResults<ContactEntity>
+    
     @EnvironmentObject private var vm: ViewModel
-    @State private var isAdding: ContactStruct?
+    @State private var isAdding: ContactEntity?
+    @State private var lastContact = Date()
     @State private var date = Date()
     @State private var feeling = Feelings.notTooBad
     @State private var describe = ""
@@ -32,28 +38,19 @@ struct ContactListView: View {
     var body: some View {
         NavigationStack {
             List {
-                VStack(alignment: .leading) {
-                    Text("Is signed in: \(vm.isSignedIntoiCloud.description)")
-                    Text("Permission status: \(vm.permissionStatus.description)")
-                    Text("Surname: \(vm.userName)")
-                    Text("Email: \(vm.email)")
-                    Text("Phone number: \(vm.telephone)")
-                    Text(vm.error)
-                }
-                if vm.contacts.count == 0 {
+                if fetchedContacts.count == 0 {
                     Text("В вашем списке пока-что нет ни одного контакта 🧐\n\nНажмите '+' в правом верхнем углу, чтобы добавить ваш первый контакт.")
                         .frame(maxWidth: 550, alignment: .center)
                         .multilineTextAlignment(.center)
                         .font(.title3)
                         .foregroundColor(.theme.secondaryText)
                         .padding(.top, 40)
-                    
                 }
-                ForEach(vm.listOrder(order: filter)) { customer in
+                ForEach(fetchedContacts) { contact in
                     ZStack(alignment: .leading) {
-                        ContactCellView(contact: customer)
+                        ContactCellView(contact: contact)
                         NavigationLink {
-                            ContactView(contact: customer)
+                            ContactView(contact: contact)
                         } label: {
                             EmptyView()
                         }
@@ -62,7 +59,7 @@ struct ContactListView: View {
                     .listRowSeparator(.hidden)
                     .swipeActions(edge: .leading, allowsFullSwipe: false) {
                         Button {
-                            isAdding = customer
+                            isAdding = contact
                         } label: {
                             Label("Контакт", systemImage: "person.fill.checkmark")
                         }
@@ -70,18 +67,18 @@ struct ContactListView: View {
                     }
                     .swipeActions(edge: .leading, allowsFullSwipe: false, content: {
                         Button {
-                            if let index = vm.contacts.firstIndex(where: {$0.id == customer.id}) {
-                                vm.contacts[index].isFavorite.toggle()
+                            if let index = vm.fetchedContacts.firstIndex(where: {$0.id == contact.id}) {
+                                vm.fetchedContacts[index].isFavorite.toggle()
                             }
                         } label: {
-                            Label(customer.isFavorite ? "Убрать" : "Добавить", systemImage: customer.isFavorite ? "star.slash" : "star.fill")
+                            Label(contact.isFavorite ? "Убрать" : "Добавить", systemImage: contact.isFavorite ? "star.slash" : "star.fill")
                         }
                         .tint(.yellow)
                     })
                     .listRowSeparator(.hidden)
                 }
-                .onDelete(perform: vm.deleteContactIniCloudKit)
-                .onMove(perform: vm.moveContact)
+                .onDelete(perform: deleteContact)
+//                .onMove(perform: vm.moveContact)
             }
             .ignoresSafeArea(edges: .bottom)
             .scrollIndicators(ScrollIndicatorVisibility.hidden)
@@ -123,6 +120,21 @@ struct ContactListView: View {
             })
             .sheet(item: $isAdding) { contact in
                 sheetView
+            }
+        }
+    }
+    
+    func deleteContact(offsets: IndexSet) {
+        withAnimation {
+            offsets.map { fetchedContacts[$0] }.forEach(moc.delete)
+
+            do {
+                try moc.save()
+            } catch {
+                // Replace this implementation with code to handle the error appropriately.
+                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
+                let nsError = error as NSError
+                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
             }
         }
     }
@@ -190,11 +202,9 @@ extension ContactListView {
                     HStack {
                         Spacer()
                         Button {
-                            vm.addMeeting(contact: isAdding!, date: date, feeling: feeling, describe: describe)
-                            isAdding!.contact.lastContact = isAdding!.contact.allEvents.map{$0.date}.max()!
-                            if let i = vm.contacts.firstIndex(where: {$0.id == isAdding!.id}) {
-                                vm.contacts[i].contact.lastContact = isAdding!.contact.allEvents.map{$0.date}.max()!
-                            }
+                            vm.createMeeting(contact: isAdding!, meetingDate: date, meetingDescribe: describe, meetingFeeling: feeling, context: moc)
+//                            vm.addMeeting(contact: isAdding!, date: date, feeling: feeling, describe: describe)
+                            vm.updateLastContact(contact: isAdding!, context: moc)
                             isAdding = nil
                             date = Date()
                             feeling = .notTooBad

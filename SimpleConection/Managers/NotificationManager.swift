@@ -24,9 +24,9 @@ class NotificationManager {
             }
     }
     
-    func scheduleNotification(contact: ContactStruct, year: Int, month: Int, day: Int) {
+    func scheduleNotification(contact: ContactEntity, year: Int, month: Int, day: Int) {
         let content = UNMutableNotificationContent()
-        content.title = "\(contact.name) ждет общения! ⏰"
+        content.title = "\(contact.name!) ждет общения! ⏰"
         content.sound = .default
 
         var dateComponents = DateComponents()
@@ -38,7 +38,7 @@ class NotificationManager {
         let calendarTrigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
 
         let request = UNNotificationRequest(
-            identifier: contact.id,
+            identifier: contact.id!.uuidString,
             content: content,
             trigger: calendarTrigger)
         UNUserNotificationCenter.current().add(request)

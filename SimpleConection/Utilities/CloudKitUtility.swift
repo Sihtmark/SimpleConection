@@ -166,7 +166,7 @@ extension CloudKitUtility {
             case .success(let record):
                 guard let item = T(record: record) else {return}
                 completion(item)
-            case .failure(let error):
+            case .failure:
                 break
             }
         }

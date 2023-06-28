@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="21754" systemVersion="22F82" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="ContactEntity" representedClassName="ContactEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="birthday" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="component" optional="YES" attributeType="String"/>
+        <attribute name="distance" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isFavorite" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="lastContact" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="reminder" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <relationship name="meetings" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="MeetingEntity" inverseName="contact" inverseEntity="MeetingEntity"/>
+    </entity>
+    <entity name="MeetingEntity" representedClassName="MeetingEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="describe" optional="YES" attributeType="String"/>
+        <attribute name="feeling" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <relationship name="contact" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ContactEntity" inverseName="meetings" inverseEntity="ContactEntity"/>
+    </entity>
+</model>

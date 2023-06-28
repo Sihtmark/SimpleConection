@@ -9,10 +9,10 @@ import SwiftUI
 
 struct MeetingView: View {
     
+    @Environment(\.managedObjectContext) var moc
     @EnvironmentObject private var vm: ViewModel
     @Environment(\.dismiss) private var dismiss
-    let meeting: Meeting
-    @Binding var contact: ContactStruct
+    @State var meeting: MeetingEntity
     @State private var date = Date()
     @State private var feeling = Feelings.notTooBad
     @State private var describe = ""
@@ -71,15 +71,9 @@ struct MeetingView: View {
                 HStack {
                     Spacer()
                     Button {
-                        vm.updateMeeting(contact: contact, meeting: meeting, date: date, feeling: feeling, describe: describe)
-                        if let index = contact.contact.allEvents.firstIndex(where: {$0.id == meeting.id}) {
-                            contact.contact.allEvents[index] = contact.contact.allEvents[index].updateMeeting(date: date, feeling: feeling, describe: describe)
-                        }
-                        contact.contact.lastContact = contact.contact.allEvents.map{$0.date}.max()!
+                        vm.editMeeting(meeting: meeting, meetingDate: date, meetingDescribe: describe, meetingFeeling: feeling, context: moc)
+                        vm.updateLastContact(contact: meeting.contact!, context: moc)
                         dismiss()
-                        if let i = vm.contacts.firstIndex(where: {$0.id == contact.id}) {
-                            vm.contacts[i].contact.lastContact = contact.contact.allEvents.map{$0.date}.max()!
-                        }
                     } label: {
                         Text("Сохранить")
                             .bold()
@@ -92,14 +86,8 @@ struct MeetingView: View {
                 HStack {
                     Spacer()
                     Button(role: .destructive) {
-                        vm.deleteMeeting(contact: contact, meeting: meeting)
-                        if let index = contact.contact.allEvents.firstIndex(where: {$0.id == meeting.id}) {
-                            contact.contact.allEvents.remove(at: index)
-                        }
-                        contact.contact.lastContact = contact.contact.allEvents.map{$0.date}.max()!
-                        if let i = vm.contacts.firstIndex(where: {$0.id == contact.id}) {
-                            vm.contacts[i].contact.lastContact = contact.contact.allEvents.map{$0.date}.max()!
-                        }
+                        vm.deleteMeetingFromMeetingView(meeting: meeting, context: moc)
+                        vm.updateLastContact(contact: meeting.contact!, context: moc)
                         dismiss()
                     } label: {
                         Text("Удалить")
@@ -113,9 +101,9 @@ struct MeetingView: View {
         .frame(maxWidth: 550)
         .padding()
         .onAppear {
-            date = meeting.date
-            feeling = meeting.feeling
-            describe = meeting.describe
+            date = meeting.date!
+            feeling = Feelings(rawValue: meeting.feeling!)!
+            describe = meeting.describe!
         }
         .onTapGesture(count: 2) {
             if describeInFocus {
@@ -127,10 +115,12 @@ struct MeetingView: View {
 
 struct EventView_Previews: PreviewProvider {
     static var previews: some View {
-        MeetingView(meeting: sampleContact.contact.allEvents.first!, contact: .constant(sampleContact))
+        MeetingView(meeting: ViewModel().fetchedMeetings.first!)
+            .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
             .environmentObject(ViewModel())
             .preferredColorScheme(.light)
-        MeetingView(meeting: sampleContact.contact.allEvents.first!, contact: .constant(sampleContact))
+        MeetingView(meeting: ViewModel().fetchedMeetings.first!)
+            .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
             .environmentObject(ViewModel())
             .preferredColorScheme(.dark)
     }
