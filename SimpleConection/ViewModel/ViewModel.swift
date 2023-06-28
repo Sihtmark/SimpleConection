@@ -323,7 +323,7 @@ extension ViewModel {
     }
     
     func updateLastContact(contact: ContactEntity, context: NSManagedObjectContext) {
-        var array = fetchedMeetings.filter({$0.contact == contact})
+        let array = fetchedMeetings.filter({$0.contact == contact})
         let date = array.map{$0.date!}.max()
         contact.lastContact = date
         

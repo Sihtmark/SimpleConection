@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A013035E2A4C16760065FEA4 /* SimpleConection.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A013035C2A4C16760065FEA4 /* SimpleConection.xcdatamodeld */; };
 		A03464482A3C3D7900E7A35C /* CloudKitUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = A03464472A3C3D7900E7A35C /* CloudKitUtility.swift */; };
 		A05991A92A3451EB0010D2ED /* SimpleConectionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A05991A82A3451EB0010D2ED /* SimpleConectionApp.swift */; };
 		A05991AD2A3451EC0010D2ED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A05991AC2A3451EC0010D2ED /* Assets.xcassets */; };
@@ -23,11 +24,11 @@
 		A05991EB2A3454EE0010D2ED /* ChangeContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A05991EA2A3454EE0010D2ED /* ChangeContactView.swift */; };
 		A05991EF2A34550E0010D2ED /* ContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A05991EE2A34550E0010D2ED /* ContactView.swift */; };
 		A05991F12A3455200010D2ED /* MeetingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A05991F02A3455200010D2ED /* MeetingView.swift */; };
-		A060C2BF2A3DDB2700DE1A4E /* CoreDataModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A060C2BD2A3DDB2700DE1A4E /* CoreDataModel.xcdatamodeld */; };
 		A060C2C22A3DDBF400DE1A4E /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = A060C2C12A3DDBF400DE1A4E /* Persistence.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A013035D2A4C16760065FEA4 /* SimpleConection.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = SimpleConection.xcdatamodel; sourceTree = "<group>"; };
 		A03464472A3C3D7900E7A35C /* CloudKitUtility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitUtility.swift; sourceTree = "<group>"; };
 		A0397C322A38771200AA9168 /* SimpleConection.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SimpleConection.entitlements; sourceTree = "<group>"; };
 		A05991A52A3451EB0010D2ED /* SimpleConection.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SimpleConection.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -46,7 +47,6 @@
 		A05991EA2A3454EE0010D2ED /* ChangeContactView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeContactView.swift; sourceTree = "<group>"; };
 		A05991EE2A34550E0010D2ED /* ContactView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactView.swift; sourceTree = "<group>"; };
 		A05991F02A3455200010D2ED /* MeetingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingView.swift; sourceTree = "<group>"; };
-		A060C2BE2A3DDB2700DE1A4E /* CoreDataModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = CoreDataModel.xcdatamodel; sourceTree = "<group>"; };
 		A060C2C12A3DDBF400DE1A4E /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		A060C2C32A3DDD0600DE1A4E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -163,8 +163,8 @@
 		A060C2C02A3DDBCD00DE1A4E /* CoreData */ = {
 			isa = PBXGroup;
 			children = (
-				A060C2BD2A3DDB2700DE1A4E /* CoreDataModel.xcdatamodeld */,
 				A060C2C12A3DDBF400DE1A4E /* Persistence.swift */,
+				A013035C2A4C16760065FEA4 /* SimpleConection.xcdatamodeld */,
 			);
 			path = CoreData;
 			sourceTree = "<group>";
@@ -254,7 +254,7 @@
 				A05991F12A3455200010D2ED /* MeetingView.swift in Sources */,
 				A05991E22A3454900010D2ED /* ContactListView.swift in Sources */,
 				A05991BA2A34526C0010D2ED /* Color.swift in Sources */,
-				A060C2BF2A3DDB2700DE1A4E /* CoreDataModel.xcdatamodeld in Sources */,
+				A013035E2A4C16760065FEA4 /* SimpleConection.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -473,13 +473,13 @@
 /* End XCConfigurationList section */
 
 /* Begin XCVersionGroup section */
-		A060C2BD2A3DDB2700DE1A4E /* CoreDataModel.xcdatamodeld */ = {
+		A013035C2A4C16760065FEA4 /* SimpleConection.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (
-				A060C2BE2A3DDB2700DE1A4E /* CoreDataModel.xcdatamodel */,
+				A013035D2A4C16760065FEA4 /* SimpleConection.xcdatamodel */,
 			);
-			currentVersion = A060C2BE2A3DDB2700DE1A4E /* CoreDataModel.xcdatamodel */;
-			path = CoreDataModel.xcdatamodeld;
+			currentVersion = A013035D2A4C16760065FEA4 /* SimpleConection.xcdatamodel */;
+			path = SimpleConection.xcdatamodeld;
 			sourceTree = "<group>";
 			versionGroupType = wrapper.xcdatamodel;
 		};
