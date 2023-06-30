@@ -9,11 +9,6 @@ import SwiftUI
 
 struct ContactListView: View {
     
-    @Environment(\.managedObjectContext) var moc
-    
-    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \ContactEntity.name, ascending: true)], animation: .default)
-    var fetchedContacts: FetchedResults<ContactEntity>
-    
     @EnvironmentObject private var vm: ViewModel
     @State private var isAdding: ContactEntity?
     @State private var lastContact = Date()
@@ -38,7 +33,7 @@ struct ContactListView: View {
     var body: some View {
         NavigationStack {
             List {
-                if fetchedContacts.count == 0 {
+                if vm.fetchedContacts.count == 0 {
                     Text("В вашем списке пока-что нет ни одного контакта 🧐\n\nНажмите '+' в правом верхнем углу, чтобы добавить ваш первый контакт.")
                         .frame(maxWidth: 550, alignment: .center)
                         .multilineTextAlignment(.center)
@@ -46,7 +41,7 @@ struct ContactListView: View {
                         .foregroundColor(.theme.secondaryText)
                         .padding(.top, 40)
                 }
-                ForEach(fetchedContacts) { contact in
+                ForEach(vm.fetchedContacts) { contact in
                     ZStack(alignment: .leading) {
                         ContactCellView(contact: contact)
                         NavigationLink {
@@ -61,17 +56,15 @@ struct ContactListView: View {
                         Button {
                             isAdding = contact
                         } label: {
-                            Label("Контакт", systemImage: "person.fill.checkmark")
+                            Label("Contact", systemImage: "person.fill.checkmark")
                         }
                         .tint(.green)
                     }
                     .swipeActions(edge: .leading, allowsFullSwipe: false, content: {
                         Button {
-                            if let index = vm.fetchedContacts.firstIndex(where: {$0.id == contact.id}) {
-                                vm.fetchedContacts[index].isFavorite.toggle()
-                            }
+                            vm.toggleFavorite(contact: contact)
                         } label: {
-                            Label(contact.isFavorite ? "Убрать" : "Добавить", systemImage: contact.isFavorite ? "star.slash" : "star.fill")
+                            Label(contact.isFavorite ? "Remove" : "Add", systemImage: contact.isFavorite ? "star.slash" : "star.fill")
                         }
                         .tint(.yellow)
                     })
@@ -84,7 +77,7 @@ struct ContactListView: View {
             .scrollIndicators(ScrollIndicatorVisibility.hidden)
             .frame(maxWidth: 550)
             .listStyle(.inset)
-            .navigationTitle("Контакты")
+            .navigationTitle("Contacts")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
@@ -104,7 +97,7 @@ struct ContactListView: View {
                     }
                 }
             }
-            .alert("Фильтр контактов", isPresented: $showAlert, actions: {
+            .alert("Contact filter", isPresented: $showAlert, actions: {
                 Button("Все по алфавиту") {
                     filter = .alphabeticalOrder
                 }
@@ -126,10 +119,10 @@ struct ContactListView: View {
     
     func deleteContact(offsets: IndexSet) {
         withAnimation {
-            offsets.map { fetchedContacts[$0] }.forEach(moc.delete)
+            offsets.map { vm.fetchedContacts[$0] }.forEach(vm.coreDataManager.context.delete)
 
             do {
-                try moc.save()
+                try vm.coreDataManager.context.save()
             } catch {
                 // Replace this implementation with code to handle the error appropriately.
                 // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
@@ -162,7 +155,7 @@ extension ContactListView {
                 Button {
                     isAdding = nil
                 } label: {
-                    Label("Назад", systemImage: "chevron.left")
+                    Label("Back", systemImage: "chevron.left")
                 }
                 Spacer()
             }
@@ -202,15 +195,15 @@ extension ContactListView {
                     HStack {
                         Spacer()
                         Button {
-                            vm.createMeeting(contact: isAdding!, meetingDate: date, meetingDescribe: describe, meetingFeeling: feeling, context: moc)
+                            vm.createMeeting(contact: isAdding!, meetingDate: date, meetingDescribe: describe, meetingFeeling: feeling)
 //                            vm.addMeeting(contact: isAdding!, date: date, feeling: feeling, describe: describe)
-                            vm.updateLastContact(contact: isAdding!, context: moc)
+                            vm.updateLastContact(contact: isAdding!)
                             isAdding = nil
                             date = Date()
                             feeling = .notTooBad
                             describe = ""
                         } label: {
-                            Text("Сохранить")
+                            Text("Save")
                                 .bold()
                                 .padding(10)
                                 .padding(.horizontal)

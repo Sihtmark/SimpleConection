@@ -9,7 +9,6 @@ import SwiftUI
 
 struct ChangeContactView: View {
     
-    @Environment(\.managedObjectContext) var moc
     @EnvironmentObject private var vm: ViewModel
     @Binding var contact: ContactEntity
     @Environment(\.dismiss) var dismiss
@@ -46,7 +45,7 @@ struct ChangeContactView: View {
                 Button {
                     dismiss()
                 } label: {
-                    Label("Назад", systemImage: "chevron.left")
+                    Label("Back", systemImage: "chevron.left")
                 }
                 Spacer()
             }
@@ -70,7 +69,7 @@ struct ChangeContactView: View {
         }
         .frame(maxWidth: 550)
         .padding()
-        .navigationTitle("Новый пользователь")
+        .navigationTitle("New customer")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -89,13 +88,13 @@ struct ChangeContactView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
             ChangeContactView(contact: .constant(ViewModel().fetchedContacts.first!))
-                .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+                .environment(\.managedObjectContext, CoreDataManager.preview.container.viewContext)
                 .preferredColorScheme(.dark)
         }
         .environmentObject(ViewModel())
         NavigationStack {
             ChangeContactView(contact: .constant(ViewModel().fetchedContacts.first!))
-                .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+                .environment(\.managedObjectContext, CoreDataManager.preview.container.viewContext)
                 .preferredColorScheme(.light)
         }
         .environmentObject(ViewModel())
@@ -105,20 +104,20 @@ struct ChangeContactView_Previews: PreviewProvider {
 extension ChangeContactView {
     var mainSection: some View {
         VStack(alignment: .leading, spacing: 30) {
-            TextField("Имя", text: $name)
+            TextField("Name", text: $name)
                 .foregroundColor(.theme.standard)
                 .textFieldStyle(.roundedBorder)
                 .autocorrectionDisabled()
-            DatePicker("День рождения:", selection: $birthday, in: dateRange, displayedComponents: .date)
-                .environment(\.locale, Locale.init(identifier: "ru"))
+            DatePicker("Birthday", selection: $birthday, in: dateRange, displayedComponents: .date)
+//                .environment(\.locale, Locale.init(identifier: "ru"))
                 .foregroundColor(.theme.standard)
         }
     }
     var meetingTrackerSection: some View {
         VStack(alignment: .leading, spacing: 30) {
             if contact.meetings == nil {
-                DatePicker("Последнее общение:", selection: $lastMeeting, in: dateRange, displayedComponents: .date)
-                    .environment(\.locale, Locale.init(identifier: "ru"))
+                DatePicker("Last contact", selection: $lastMeeting, in: dateRange, displayedComponents: .date)
+//                    .environment(\.locale, Locale.init(identifier: "ru"))
                     .foregroundColor(.theme.standard)
                 VStack {
                     Picker("", selection: $feeling) {
@@ -129,10 +128,10 @@ extension ChangeContactView {
                     .pickerStyle(.segmented)
                 }
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Заметки или описание встречи:")
+                    Text("Notes")
                         .foregroundColor(.theme.standard)
                     if inFocus {
-                        Text("Дважды коснитесь экрана в свободном месте чтобы убрать клавиатуру")
+                        Text("To hide the keyboard double-tap on screen")
                             .font(.caption)
                             .bold()
                             .foregroundColor(.theme.secondaryText)
@@ -149,7 +148,7 @@ extension ChangeContactView {
                 }
             }
             VStack(spacing: 5) {
-                Text("Как часто хотите общаться?")
+                Text("Contact range")
                     .font(.headline)
                     .foregroundColor(.theme.standard)
                 HStack(spacing: 15) {
@@ -179,7 +178,7 @@ extension ChangeContactView {
                 .frame(height: 120)
             }
             VStack {
-                Toggle("Напоминание когда придет время снова общаться с этим контактом", isOn: $reminder)
+                Toggle("Notifications", isOn: $reminder)
                     .foregroundColor(.theme.standard)
                 .padding(.trailing, 5)
             }
@@ -189,19 +188,10 @@ extension ChangeContactView {
         HStack {
             Spacer()
             Button {
-                vm.editContact(contact: contact, name: name, birthday: birthday, isFavorite: contact.isFavorite, distance: distance, component: component, lastContact: (contact.meetings == nil ? lastMeeting : contact.lastContact) ?? Date(), reminder: reminder, context: moc)
-                if contact.meetings == nil {
-                    vm.createMeeting(contact: contact, meetingDate: lastMeeting, meetingDescribe: describe, meetingFeeling: feeling, context: moc)
-                }
-                if reminder {
-                    vm.deleteNotification(contact: contact)
-                    vm.setNotification(contact: contact)
-                } else {
-                    vm.deleteNotification(contact: contact)
-                }
+                vm.editContact(contact: contact, name: name, birthday: birthday, isFavorite: contact.isFavorite, distance: distance, component: component, lastContact: (contact.meetings == nil ? lastMeeting : contact.lastContact) ?? Date(), reminder: reminder, meetingDate: lastMeeting, meetingDescribe: describe, meetingFeeling: feeling)
                 dismiss()
             } label: {
-                Text("Сохранить")
+                Text("Save")
                     .bold()
                     .padding(10)
                     .padding(.horizontal)

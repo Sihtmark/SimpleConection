@@ -52,11 +52,11 @@ struct ContactCellView: View {
 struct CustomerCellView_Previews: PreviewProvider {
     static var previews: some View {
         ContactCellView(contact: ViewModel().fetchedContacts.first!)
-            .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+            .environment(\.managedObjectContext, CoreDataManager.preview.container.viewContext)
             .environmentObject(ViewModel())
             .preferredColorScheme(.dark)
         ContactCellView(contact: ViewModel().fetchedContacts.first!)
-            .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+            .environment(\.managedObjectContext, CoreDataManager.preview.container.viewContext)
             .environmentObject(ViewModel())
             .preferredColorScheme(.light)
     }

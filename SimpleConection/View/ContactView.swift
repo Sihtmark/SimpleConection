@@ -9,11 +9,6 @@ import SwiftUI
 
 struct ContactView: View {
     
-    @Environment(\.managedObjectContext) var moc
-    
-    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \MeetingEntity.date, ascending: true)], animation: .default)
-    var fetchedMeetings: FetchedResults<MeetingEntity>
-    
     @EnvironmentObject var vm: ViewModel
     @Environment(\.dismiss) var dismiss
     @State var contact: ContactEntity
@@ -53,7 +48,7 @@ struct ContactView: View {
         .frame(maxWidth: 550)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(isEditing ? "Сохранить" : "Изменить") {
+                Button("Save") {
                     isEditing.toggle()
                 }
                 .disabled(name.count < 3)
@@ -77,13 +72,13 @@ struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
             ContactView(contact: ViewModel().fetchedContacts.first!)
-                .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+                .environment(\.managedObjectContext, CoreDataManager.preview.container.viewContext)
                 .preferredColorScheme(.dark)
         }
         .environmentObject(ViewModel())
         NavigationStack {
             ContactView(contact: ViewModel().fetchedContacts.first!)
-                .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+                .environment(\.managedObjectContext, CoreDataManager.preview.container.viewContext)
                 .preferredColorScheme(.light)
         }
         .environmentObject(ViewModel())
@@ -116,7 +111,7 @@ extension ContactView {
                     .foregroundColor(.theme.standard)
             }
             VStack(spacing: 5) {
-                Text("Последнее общение \(dateFormatter.string(from: contact.lastContact ?? Date()))")
+                Text("Last contact \(dateFormatter.string(from: contact.lastContact ?? Date()))")
                 Text(vm.daysFromLastEvent(lastEvent: contact.lastContact ?? Date()))
             }
             .font(.callout)
@@ -124,7 +119,7 @@ extension ContactView {
             ZStack {
                 Button {
                     isFavorite.toggle()
-                    vm.toggleFavorite(contact: self.contact, isFavorite: isFavorite, context: moc)
+                    vm.toggleFavorite(contact: self.contact)
                 } label: {
                     ZStack {
                         Image(systemName: isFavorite ? "star.fill" : "star")
@@ -135,7 +130,7 @@ extension ContactView {
                 Button {
                     isAdding.toggle()
                 } label: {
-                    Label("Добавить", systemImage: "plus")
+                    Label("Add", systemImage: "plus")
                 }
                 .buttonStyle(.bordered)
             .padding(.top, 5)
@@ -145,7 +140,7 @@ extension ContactView {
     }
     
     var eventsSection: some View {
-        ForEach(fetchedMeetings.filter({$0.contact == contact})) { meeting in
+        ForEach(vm.fetchedMeetings.filter({$0.contact == contact})) { meeting in
             NavigationLink {
                 MeetingView(meeting: meeting)
             } label: {
@@ -178,7 +173,7 @@ extension ContactView {
                 Button {
                     isAdding.toggle()
                 } label: {
-                    Label("Назад", systemImage: "chevron.left")
+                    Label("Back", systemImage: "chevron.left")
                 }
                 Spacer()
             }
@@ -218,15 +213,15 @@ extension ContactView {
                     HStack {
                         Spacer()
                         Button {
-                            vm.createMeeting(contact: contact, meetingDate: date, meetingDescribe: describe, meetingFeeling: feeling, context: moc)
+                            vm.createMeeting(contact: contact, meetingDate: date, meetingDescribe: describe, meetingFeeling: feeling)
 //                            contact = contact.addMeeting(contact: contact.contact, date: date, feeling: feeling, describe: describe)
-                            vm.updateLastContact(contact: contact, context: moc)
+                            vm.updateLastContact(contact: contact)
                             isAdding.toggle()
                             date = Date()
                             feeling = .notTooBad
                             describe = ""
                         } label: {
-                            Text("Сохранить")
+                            Text("Save")
                                 .bold()
                                 .padding(10)
                                 .padding(.horizontal)

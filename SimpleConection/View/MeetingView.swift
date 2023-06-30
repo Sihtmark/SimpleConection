@@ -9,7 +9,6 @@ import SwiftUI
 
 struct MeetingView: View {
     
-    @Environment(\.managedObjectContext) var moc
     @EnvironmentObject private var vm: ViewModel
     @Environment(\.dismiss) private var dismiss
     @State var meeting: MeetingEntity
@@ -53,7 +52,7 @@ struct MeetingView: View {
                 }
                 .pickerStyle(.segmented)
                 if describeInFocus {
-                    Text("Дважды коснитесь экрана в свободном месте чтобы убрать клавиатуру")
+                    Text("To hide the keyboard double-tap on screenу")
                         .font(.caption)
                         .bold()
                         .foregroundColor(.theme.secondaryText)
@@ -71,11 +70,11 @@ struct MeetingView: View {
                 HStack {
                     Spacer()
                     Button {
-                        vm.editMeeting(meeting: meeting, meetingDate: date, meetingDescribe: describe, meetingFeeling: feeling, context: moc)
-                        vm.updateLastContact(contact: meeting.contact!, context: moc)
+                        vm.editMeeting(contact: meeting.contact!, meeting: meeting, meetingDate: date, meetingDescribe: describe, meetingFeeling: feeling)
+                        vm.updateLastContact(contact: meeting.contact!)
                         dismiss()
                     } label: {
-                        Text("Сохранить")
+                        Text("Save")
                             .bold()
                             .padding(10)
                             .padding(.horizontal)
@@ -86,11 +85,11 @@ struct MeetingView: View {
                 HStack {
                     Spacer()
                     Button(role: .destructive) {
-                        vm.deleteMeetingFromMeetingView(meeting: meeting, context: moc)
-                        vm.updateLastContact(contact: meeting.contact!, context: moc)
+                        vm.deleteMeetingFromMeetingView(meeting: meeting)
+                        vm.updateLastContact(contact: meeting.contact!)
                         dismiss()
                     } label: {
-                        Text("Удалить")
+                        Text("Delete")
                     }
                     Spacer()
                 }
@@ -116,11 +115,11 @@ struct MeetingView: View {
 struct EventView_Previews: PreviewProvider {
     static var previews: some View {
         MeetingView(meeting: ViewModel().fetchedMeetings.first!)
-            .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+            .environment(\.managedObjectContext, CoreDataManager.preview.container.viewContext)
             .environmentObject(ViewModel())
             .preferredColorScheme(.light)
         MeetingView(meeting: ViewModel().fetchedMeetings.first!)
-            .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+            .environment(\.managedObjectContext, CoreDataManager.preview.container.viewContext)
             .environmentObject(ViewModel())
             .preferredColorScheme(.dark)
     }

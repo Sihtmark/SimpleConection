@@ -7,11 +7,10 @@
 
 import CoreData
 
-struct PersistenceController {
-    static let shared = PersistenceController()
-
-    static var preview: PersistenceController = {
-        let result = PersistenceController(inMemory: true)
+struct CoreDataManager {
+    
+    static var preview: CoreDataManager = {
+        let result = CoreDataManager(inMemory: true)
         let viewContext = result.container.viewContext
         let newContact = ContactEntity(context: viewContext)
         newContact.name = "Janet"
@@ -39,7 +38,9 @@ struct PersistenceController {
         return result
     }()
 
+    static let shared = CoreDataManager()
     let container: NSPersistentCloudKitContainer
+    let context: NSManagedObjectContext
 
     init(inMemory: Bool = false) {
         container = NSPersistentCloudKitContainer(name: "SimpleConection")
@@ -62,7 +63,16 @@ struct PersistenceController {
                 fatalError("Unresolved error \(error), \(error.userInfo)")
             }
         })
-        container.viewContext.automaticallyMergesChangesFromParent = true
+        context = container.viewContext
+        context.automaticallyMergesChangesFromParent = true
+    }
+    
+    func save() {
+        do {
+            try context.save()
+        } catch let error {
+            print("Error saving core data: \(error.localizedDescription)")
+        }
     }
 }
 

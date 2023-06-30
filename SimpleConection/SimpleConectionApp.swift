@@ -12,7 +12,7 @@ struct SimpleConectionApp: App {
     
     @StateObject private var vm = ViewModel()
     
-    let persistenceController = PersistenceController.shared
+    let persistenceController = CoreDataManager.shared
     
     init() {
         UINavigationBar.appearance().largeTitleTextAttributes = [.foregroundColor: UIColor(Color.theme.standard)]

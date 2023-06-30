@@ -11,12 +11,17 @@ import CloudKit
 import CoreData
 
 class ViewModel: ObservableObject {
+    
+    let coreDataManager = CoreDataManager.shared
+    
+    @Published var fetchedContacts = [ContactEntity]()
+    @Published var fetchedMeetings = [MeetingEntity]()
 
-    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \ContactEntity.name, ascending: true)], animation: .default)
-    var fetchedContacts: FetchedResults<ContactEntity>
+//    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \ContactEntity.name, ascending: true)], animation: .default)
+//    var fetchedContacts: FetchedResults<ContactEntity>
 
-    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \MeetingEntity.date, ascending: true)], animation: .default)
-    var fetchedMeetings: FetchedResults<MeetingEntity>
+//    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \MeetingEntity.date, ascending: true)], animation: .default)
+//    var fetchedMeetings: FetchedResults<MeetingEntity>
     
     let nm = NotificationManager()
     
@@ -28,9 +33,50 @@ class ViewModel: ObservableObject {
     @Published var permissionStatus = false
     
     init() {
-        requestPermission()
-        getiCloudStatus()
-        fetchiCloudUserRecordID()
+//        requestPermission()
+//        getiCloudStatus()
+//        fetchiCloudUserRecordID()
+        
+        getContacts()
+        getMeetings()
+    }
+    
+    func getContacts() {
+        let request = NSFetchRequest<ContactEntity>(entityName: "ContactEntity")
+        let sort = NSSortDescriptor(keyPath: \ContactEntity.name, ascending: true)
+        request.sortDescriptors = [sort]
+//        let filter = NSPredicate(format: "name == %@", "Apple")
+//        request.predicate = filter
+        do {
+            fetchedContacts = try coreDataManager.context.fetch(request)
+        } catch let error {
+            print("Error fetching contacts: \(error.localizedDescription)")
+        }
+    }
+    
+    func getMeetings() {
+        let request = NSFetchRequest<MeetingEntity>(entityName: "MeetingEntity")
+        let sort = NSSortDescriptor(keyPath: \MeetingEntity.date, ascending: true)
+        request.sortDescriptors = [sort]
+//        let filter = NSPredicate(format: "name == %@", "Apple")
+//        request.predicate = filter
+        do {
+            fetchedMeetings = try coreDataManager.context.fetch(request)
+        } catch let error {
+            print("Error fetching meetings: \(error.localizedDescription)")
+        }
+    }
+    
+    func getMeetings(forContact contact: ContactEntity) {
+        let request = NSFetchRequest<MeetingEntity>(entityName: "EmployeeEntity")
+        let filter = NSPredicate(format: "contact == %@", contact)
+        request.predicate = filter
+        
+        do {
+            fetchedMeetings = try coreDataManager.context.fetch(request)
+        } catch let error {
+            print("Error fetching meetings for \(contact): \(error.localizedDescription)")
+        }
     }
     
     // ‼️
@@ -40,73 +86,73 @@ class ViewModel: ObservableObject {
 //        contacts.move(fromOffsets: from, toOffset: to)
 //    }
     
-    enum CloudKitError: String {
-        case iCloudAccountNotDetermined
-        case iCloudAccountRestricted
-        case iCloudAccountNotFound
-        case iCloudAccountTemporarilyUnavailable
-        case iCloudAccountUnknown
-    }
+//    enum CloudKitError: String {
+//        case iCloudAccountNotDetermined
+//        case iCloudAccountRestricted
+//        case iCloudAccountNotFound
+//        case iCloudAccountTemporarilyUnavailable
+//        case iCloudAccountUnknown
+//    }
     
-    func getiCloudStatus() {
-        CKContainer.default().accountStatus { [weak self] returnedStatus, returnedError in
-            DispatchQueue.main.async {
-                switch returnedStatus {
-                case .couldNotDetermine:
-                    self?.error = CloudKitError.iCloudAccountNotDetermined.rawValue
-                case .available:
-                    self?.isSignedIntoiCloud = true
-                case .restricted:
-                    self?.error = CloudKitError.iCloudAccountRestricted.rawValue
-                case .noAccount:
-                    self?.error = CloudKitError.iCloudAccountNotFound.rawValue
-                case .temporarilyUnavailable:
-                    self?.error = CloudKitError.iCloudAccountTemporarilyUnavailable.rawValue
-                @unknown default:
-                    self?.error = CloudKitError.iCloudAccountUnknown.rawValue
-                }
-            }
-        }
-    }
+//    func getiCloudStatus() {
+//        CKContainer.default().accountStatus { [weak self] returnedStatus, returnedError in
+//            DispatchQueue.main.async {
+//                switch returnedStatus {
+//                case .couldNotDetermine:
+//                    self?.error = CloudKitError.iCloudAccountNotDetermined.rawValue
+//                case .available:
+//                    self?.isSignedIntoiCloud = true
+//                case .restricted:
+//                    self?.error = CloudKitError.iCloudAccountRestricted.rawValue
+//                case .noAccount:
+//                    self?.error = CloudKitError.iCloudAccountNotFound.rawValue
+//                case .temporarilyUnavailable:
+//                    self?.error = CloudKitError.iCloudAccountTemporarilyUnavailable.rawValue
+//                @unknown default:
+//                    self?.error = CloudKitError.iCloudAccountUnknown.rawValue
+//                }
+//            }
+//        }
+//    }
+//
+//    func discoveriCloudUser(id: CKRecord.ID) {
+//        CKContainer.default().discoverUserIdentity(withUserRecordID: id) { [weak self] returnedIdentity, returnedError in
+//            DispatchQueue.main.async {
+//
+//                if let name = returnedIdentity?.nameComponents?.familyName {
+//                    self?.userName = name
+//                }
+//
+//                // We can't get email because we get permission by id. We can get email if we get permission by email
+//                if let email = returnedIdentity?.lookupInfo?.emailAddress {
+//                    self?.email = email
+//                }
+//
+//                // We can't get number because we get permission by id. We can get number if we get permission by number
+//                if let phone = returnedIdentity?.lookupInfo?.phoneNumber {
+//                    self?.telephone = phone
+//                }
+//            }
+//        }
+//    }
+//
+//    func fetchiCloudUserRecordID() {
+//        CKContainer.default().fetchUserRecordID { [weak self] returnedID, returnedError in
+//            if let id = returnedID {
+//                self?.discoveriCloudUser(id: id)
+//            }
+//        }
+//    }
     
-    func discoveriCloudUser(id: CKRecord.ID) {
-        CKContainer.default().discoverUserIdentity(withUserRecordID: id) { [weak self] returnedIdentity, returnedError in
-            DispatchQueue.main.async {
-                
-                if let name = returnedIdentity?.nameComponents?.familyName {
-                    self?.userName = name
-                }
-                
-                // We can't get email because we get permission by id. We can get email if we get permission by email
-                if let email = returnedIdentity?.lookupInfo?.emailAddress {
-                    self?.email = email
-                }
-                
-                // We can't get number because we get permission by id. We can get number if we get permission by number
-                if let phone = returnedIdentity?.lookupInfo?.phoneNumber {
-                    self?.telephone = phone
-                }
-            }
-        }
-    }
-    
-    func fetchiCloudUserRecordID() {
-        CKContainer.default().fetchUserRecordID { [weak self] returnedID, returnedError in
-            if let id = returnedID {
-                self?.discoveriCloudUser(id: id)
-            }
-        }
-    }
-    
-    func requestPermission() {
-        CKContainer.default().requestApplicationPermission([.userDiscoverability]) { [weak self] returnedStatus, returnedError in
-            DispatchQueue.main.async {
-                if returnedStatus == .granted {
-                    self?.permissionStatus = true
-                }
-            }
-        }
-    }
+//    func requestPermission() {
+//        CKContainer.default().requestApplicationPermission([.userDiscoverability]) { [weak self] returnedStatus, returnedError in
+//            DispatchQueue.main.async {
+//                if returnedStatus == .granted {
+//                    self?.permissionStatus = true
+//                }
+//            }
+//        }
+//    }
     
     func extractDate(date: Date, format: String) -> String {
         let formatter = DateFormatter()
@@ -140,26 +186,11 @@ class ViewModel: ObservableObject {
         let calendar = Calendar.current
         let distance = calendar.dateComponents([.day], from: lastEvent, to: Date())
         let days = distance.day!
-        var dayReminder: Int {
-            if days < 20 {
-                return days
-            } else if days % 1000 >= 1 {
-                return days % 1000
-            } else if days % 100 >= 1 {
-                return days % 100
-            } else {
-                return days % 10
-            }
-        }
-        switch dayReminder {
-        case 1:
-            return "Прошел \(days) день"
-        case 2...4:
-            return "Прошло \(days) дня"
-        case 11...19:
-            return "Прошло \(days) дней"
+        switch days {
+        case 1, 21:
+            return "\(days) day left"
         default:
-            return "Прошло \(days) дней"
+            return "\(days) days left"
         }
     }
     
@@ -167,22 +198,11 @@ class ViewModel: ObservableObject {
         let calendar = Calendar.current
         let distance = calendar.dateComponents([.day], from: lastEvent, to: Date())
         let days = distance.day!
-        var dayReminder: Int {
-            if days < 20 {
-                return days
-            } else {
-                return days % 10
-            }
-        }
-        switch dayReminder {
-        case 1:
-            return "\(days) день"
-        case 2...4:
-            return "\(days) дня"
-        case 11...19:
-            return "\(days) дней"
+        switch days {
+        case 1, 21:
+            return "\(days) day"
         default:
-            return "\(days) дней"
+            return "\(days) days"
         }
     }
     
@@ -190,9 +210,9 @@ class ViewModel: ObservableObject {
         nm.cancelNotification(id: contact.id!.uuidString)
     }
     
-    func setNotification(contact: ContactEntity) {
+    func setNotification(contact: ContactEntity, component: Components, lastContact: Date, interval: Int) {
         nm.cancelNotification(id: contact.id!.uuidString)
-        let date = getNextEventDate(component: Components(rawValue: contact.component!)!, lastContact: contact.lastContact!, interval: Int(contact.distance))
+        let date = getNextEventDate(component: Components(rawValue: component.rawValue)!, lastContact: lastContact, interval: Int(interval))
         let calendar = Calendar.current
         let year = calendar.component(.year, from: date)
         let month = calendar.component(.month, from: date)
@@ -203,9 +223,9 @@ class ViewModel: ObservableObject {
 
 //MARK: Core Date CRUD functions
 extension ViewModel {
-    func createContact(name: String, birthday: Date, isFavorite: Bool, distance: Int, component: Components, lastContact: Date, reminder: Bool, meetingDate: Date, meetingDescribe: String, meetingFeeling: Feelings, context: NSManagedObjectContext) {
+    func createContact(name: String, birthday: Date, isFavorite: Bool, distance: Int, component: Components, lastContact: Date, reminder: Bool, meetingDate: Date, meetingDescribe: String, meetingFeeling: Feelings) {
         withAnimation {
-            let newContact = ContactEntity(context: context)
+            let newContact = ContactEntity(context: coreDataManager.context)
             newContact.name = name
             newContact.birthday = birthday
             newContact.isFavorite = isFavorite
@@ -215,7 +235,7 @@ extension ViewModel {
             newContact.reminder = reminder
             newContact.id = UUID()
             
-            let newMeeting = MeetingEntity(context: context)
+            let newMeeting = MeetingEntity(context: coreDataManager.context)
             newMeeting.id = UUID()
             newMeeting.date = meetingDate
             newMeeting.describe = meetingDescribe
@@ -224,37 +244,39 @@ extension ViewModel {
             newContact.meetings!.adding(newMeeting)
             newMeeting.contact = newContact
             
-            do {
-                try context.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+            save()
+            
+            if reminder {
+                setNotification(contact: newContact, component: component, lastContact: lastContact, interval: distance)
             }
         }
     }
     
-    func createMeeting(contact: ContactEntity, meetingDate: Date, meetingDescribe: String, meetingFeeling: Feelings, context: NSManagedObjectContext) {
+    func createMeeting(contact: ContactEntity, meetingDate: Date, meetingDescribe: String, meetingFeeling: Feelings) {
         withAnimation {
-            let newMeeting = MeetingEntity(context: context)
+            let maxDate = fetchedMeetings.filter({$0.contact == contact}).max(by: {$0.date! > $1.date!})!.date!
+            let newMeeting = MeetingEntity(context: coreDataManager.context)
             newMeeting.date = meetingDate
             newMeeting.describe = meetingDescribe
             newMeeting.feeling = meetingFeeling.rawValue
             newMeeting.contact = contact
             
-            do {
-                try context.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+            if meetingDate > maxDate {
+                contact.lastContact = meetingDate
+                setNotification(contact: contact, component: Components(rawValue: contact.component!)!, lastContact: meetingDate, interval: Int(contact.distance))
+            }
+            
+            save()
+            
+            if contact.reminder {
+                if meetingDate > maxDate {
+                    setNotification(contact: contact, component: Components(rawValue: contact.component!)!, lastContact: meetingDate, interval: Int(contact.distance))
+                }
             }
         }
     }
     
-    func editContact(contact: ContactEntity, name: String, birthday: Date, isFavorite: Bool, distance: Int, component: Components, lastContact: Date, reminder: Bool, context: NSManagedObjectContext) {
+    func editContact(contact: ContactEntity, name: String, birthday: Date, isFavorite: Bool, distance: Int, component: Components, lastContact: Date, reminder: Bool, meetingDate: Date, meetingDescribe: String, meetingFeeling: Feelings) {
         withAnimation {
             contact.name = name
             contact.birthday = birthday
@@ -264,89 +286,68 @@ extension ViewModel {
             contact.lastContact = lastContact
             contact.reminder = reminder
             
-            do {
-                try context.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+            save()
+            
+            if contact.meetings == nil {
+                createMeeting(contact: contact, meetingDate: meetingDate, meetingDescribe: meetingDescribe, meetingFeeling: meetingFeeling)
+            }
+            
+            if reminder {
+                setNotification(contact: contact, component: component, lastContact: lastContact, interval: distance)
+            } else {
+                deleteNotification(contact: contact)
             }
         }
     }
     
-    func editMeeting(meeting: MeetingEntity, meetingDate: Date, meetingDescribe: String, meetingFeeling: Feelings, context: NSManagedObjectContext) {
+    func editMeeting(contact: ContactEntity, meeting: MeetingEntity, meetingDate: Date, meetingDescribe: String, meetingFeeling: Feelings) {
         withAnimation {
+            let maxDate = fetchedMeetings.filter({$0.contact == contact}).max(by: {$0.date! > $1.date!})!.date!
             meeting.date = meetingDate
             meeting.describe = meetingDescribe
             meeting.feeling = meetingFeeling.rawValue
             
-            do {
-                try context.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+            if meetingDate > maxDate {
+                contact.lastContact = meetingDate
+                setNotification(contact: contact, component: Components(rawValue: contact.component!)!, lastContact: meetingDate, interval: Int(contact.distance))
             }
-        }
-    }
-    
-    func deleteMeeting(offsets: IndexSet, context: NSManagedObjectContext) {
-        withAnimation {
-            offsets.map { fetchedMeetings[$0] }.forEach(context.delete)
-
-            do {
-                try context.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
-        }
-    }
-    
-    func toggleFavorite(contact: ContactEntity, isFavorite: Bool, context: NSManagedObjectContext) {
-        withAnimation {
-            contact.isFavorite = isFavorite
             
-            do {
-                try context.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
+            save()
         }
     }
     
-    func updateLastContact(contact: ContactEntity, context: NSManagedObjectContext) {
+    func deleteMeeting(offsets: IndexSet) {
+        withAnimation {
+            offsets.map { fetchedMeetings[$0] }.forEach(coreDataManager.context.delete)
+            save()
+        }
+    }
+    
+    func toggleFavorite(contact: ContactEntity) {
+        contact.isFavorite.toggle()
+        save()
+    }
+    
+    func updateLastContact(contact: ContactEntity) {
         let array = fetchedMeetings.filter({$0.contact == contact})
         let date = array.map{$0.date!}.max()
         contact.lastContact = date
-        
-        do {
-            try context.save()
-        } catch {
-            // Replace this implementation with code to handle the error appropriately.
-            // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-            let nsError = error as NSError
-            fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-        }
+        save()
     }
     
-    func deleteMeetingFromMeetingView(meeting: MeetingEntity, context: NSManagedObjectContext) {
-        context.delete(meeting)
+    func deleteMeetingFromMeetingView(meeting: MeetingEntity) {
+        coreDataManager.context.delete(meeting)
+        save()
+    }
+    
+    func save() {
+        fetchedContacts.removeAll()
+        fetchedMeetings.removeAll()
         
-        do {
-            try context.save()
-        } catch {
-            // Replace this implementation with code to handle the error appropriately.
-            // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-            let nsError = error as NSError
-            fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+        DispatchQueue.main.async {
+            self.coreDataManager.save()
+            self.getContacts()
+            self.getMeetings()
         }
     }
 }

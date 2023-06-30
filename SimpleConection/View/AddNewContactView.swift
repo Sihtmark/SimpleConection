@@ -10,7 +10,6 @@ import UIKit
 
 struct AddNewContactView: View {
     
-    @Environment(\.managedObjectContext) var moc
     @EnvironmentObject private var vm: ViewModel
     @State private var name = ""
     @State private var selectedDate = Date()
@@ -52,7 +51,7 @@ struct AddNewContactView: View {
         }
         .frame(maxWidth: 550)
         .padding()
-        .navigationTitle("Новый пользователь")
+        .navigationTitle("New customer")
         .navigationBarTitleDisplayMode(.inline)
         .scrollIndicators(ScrollIndicatorVisibility.hidden)
         .ignoresSafeArea(edges: .bottom)
@@ -71,16 +70,12 @@ struct AddNewContactView: View {
 
 struct CreateCustomerView_Previews: PreviewProvider {
     static var previews: some View {
-        NavigationStack {
-            AddNewContactView()
-                .preferredColorScheme(.dark)
-        }
-        .environmentObject(ViewModel())
-        NavigationStack {
-            AddNewContactView()
-                .preferredColorScheme(.light)
-        }
-        .environmentObject(ViewModel())
+        AddNewContactView()
+            .preferredColorScheme(.dark)
+            .environmentObject(ViewModel())
+        AddNewContactView()
+            .preferredColorScheme(.light)
+            .environmentObject(ViewModel())
     }
 }
 
@@ -88,7 +83,7 @@ extension AddNewContactView {
     var mainSection: some View {
         VStack(alignment: .leading, spacing: 30) {
             HStack {
-                TextField("Имя", text: $name)
+                TextField("Name", text: $name)
                     .foregroundColor(.theme.standard)
                     .textFieldStyle(.roundedBorder)
                     .focused($nameInFocus)
@@ -103,15 +98,15 @@ extension AddNewContactView {
                 }
                 .padding(.horizontal, 5)
             }
-            DatePicker("День рождения:", selection: $selectedDate, in: dateRange, displayedComponents: .date)
-                .environment(\.locale, Locale.init(identifier: "ru"))
+            DatePicker("Birthday:", selection: $selectedDate, in: dateRange, displayedComponents: .date)
+            //                .environment(\.locale, Locale.init(identifier: "ru"))
                 .foregroundColor(.theme.standard)
         }
     }
     var meetingTrackerSection: some View {
         VStack(alignment: .leading, spacing: 30) {
-            DatePicker("Общались последний раз:", selection: $lastMeeting, in: dateRange, displayedComponents: .date)
-                .environment(\.locale, Locale.init(identifier: "ru"))
+            DatePicker("Last contact:", selection: $lastMeeting, in: dateRange, displayedComponents: .date)
+            //                .environment(\.locale, Locale.init(identifier: "ru"))
                 .foregroundColor(.theme.standard)
             VStack {
                 Picker("", selection: $feeling) {
@@ -122,10 +117,10 @@ extension AddNewContactView {
                 .pickerStyle(.segmented)
             }
             VStack(alignment: .leading, spacing: 10) {
-                Text("Заметки или описание встречи:")
+                Text("Notes")
                     .foregroundColor(.theme.standard)
                 if describeInFocus {
-                    Text("Дважды коснитесь экрана в свободном месте чтобы убрать клавиатуру")
+                    Text("To hide the keyboard double-tap on screen")
                         .font(.caption)
                         .bold()
                         .foregroundColor(.theme.secondaryText)
@@ -142,7 +137,7 @@ extension AddNewContactView {
                     }
             }
             VStack(alignment: .leading, spacing: 10) {
-                Text("Как часто хотите общаться:")
+                Text("Contact range")
                     .foregroundColor(.theme.standard)
                 HStack(spacing: 15) {
                     Picker("", selection: $distance) {
@@ -171,7 +166,7 @@ extension AddNewContactView {
                 .frame(height: 120)
             }
             VStack {
-                Toggle("Напоминание когда придет время снова общаться с этим контактом", isOn: $reminder)
+                Toggle("Notifications", isOn: $reminder)
                     .foregroundColor(.theme.standard)
                     .padding(.trailing, 5)
             }
@@ -181,10 +176,10 @@ extension AddNewContactView {
         HStack {
             Spacer()
             Button {
-                vm.createContact(name: name, birthday: selectedDate, isFavorite: isFavorite, distance: distance, component: component, lastContact: lastMeeting, reminder: reminder, meetingDate: lastMeeting, meetingDescribe: describe, meetingFeeling: feeling, context: moc)
+                vm.createContact(name: name, birthday: selectedDate, isFavorite: isFavorite, distance: distance, component: component, lastContact: lastMeeting, reminder: reminder, meetingDate: lastMeeting, meetingDescribe: describe, meetingFeeling: feeling)
                 dismiss()
             } label: {
-                Text("Сохранить")
+                Text("Save")
                     .bold()
                     .padding(10)
                     .padding(.horizontal)

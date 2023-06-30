@@ -24,7 +24,7 @@
 		A05991EB2A3454EE0010D2ED /* ChangeContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A05991EA2A3454EE0010D2ED /* ChangeContactView.swift */; };
 		A05991EF2A34550E0010D2ED /* ContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A05991EE2A34550E0010D2ED /* ContactView.swift */; };
 		A05991F12A3455200010D2ED /* MeetingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A05991F02A3455200010D2ED /* MeetingView.swift */; };
-		A060C2C22A3DDBF400DE1A4E /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = A060C2C12A3DDBF400DE1A4E /* Persistence.swift */; };
+		A060C2C22A3DDBF400DE1A4E /* CoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A060C2C12A3DDBF400DE1A4E /* CoreDataManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -47,7 +47,7 @@
 		A05991EA2A3454EE0010D2ED /* ChangeContactView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeContactView.swift; sourceTree = "<group>"; };
 		A05991EE2A34550E0010D2ED /* ContactView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactView.swift; sourceTree = "<group>"; };
 		A05991F02A3455200010D2ED /* MeetingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingView.swift; sourceTree = "<group>"; };
-		A060C2C12A3DDBF400DE1A4E /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
+		A060C2C12A3DDBF400DE1A4E /* CoreDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataManager.swift; sourceTree = "<group>"; };
 		A060C2C32A3DDD0600DE1A4E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -97,9 +97,9 @@
 				A05991DB2A3454310010D2ED /* ViewModel */,
 				A05991C02A3452ED0010D2ED /* Models */,
 				A05991BB2A34529A0010D2ED /* Managers */,
-				A060C2C02A3DDBCD00DE1A4E /* CoreData */,
 				A05991B62A3452400010D2ED /* Extensions */,
 				A05991AC2A3451EC0010D2ED /* Assets.xcassets */,
+				A013035C2A4C16760065FEA4 /* SimpleConection.xcdatamodeld */,
 				A05991AE2A3451EC0010D2ED /* Preview Content */,
 			);
 			path = SimpleConection;
@@ -125,6 +125,7 @@
 		A05991BB2A34529A0010D2ED /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				A060C2C12A3DDBF400DE1A4E /* CoreDataManager.swift */,
 				A05991BC2A3452B00010D2ED /* HapticManager.swift */,
 				A05991BE2A3452CA0010D2ED /* NotificationManager.swift */,
 			);
@@ -158,15 +159,6 @@
 				A05991F02A3455200010D2ED /* MeetingView.swift */,
 			);
 			path = View;
-			sourceTree = "<group>";
-		};
-		A060C2C02A3DDBCD00DE1A4E /* CoreData */ = {
-			isa = PBXGroup;
-			children = (
-				A060C2C12A3DDBF400DE1A4E /* Persistence.swift */,
-				A013035C2A4C16760065FEA4 /* SimpleConection.xcdatamodeld */,
-			);
-			path = CoreData;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -240,7 +232,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A05991A92A3451EB0010D2ED /* SimpleConectionApp.swift in Sources */,
-				A060C2C22A3DDBF400DE1A4E /* Persistence.swift in Sources */,
+				A060C2C22A3DDBF400DE1A4E /* CoreDataManager.swift in Sources */,
 				A05991EF2A34550E0010D2ED /* ContactView.swift in Sources */,
 				A05991B82A3452530010D2ED /* Date.swift in Sources */,
 				A05991EB2A3454EE0010D2ED /* ChangeContactView.swift in Sources */,
