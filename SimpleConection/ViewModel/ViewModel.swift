@@ -9,21 +9,18 @@ import SwiftUI
 import EventKit
 import CloudKit
 import CoreData
+import Combine
 
-class ViewModel: ObservableObject {
-    
-    let coreDataManager = CoreDataManager.shared
+final class ViewModel: ObservableObject {
     
     @Published var fetchedContacts = [ContactEntity]()
     @Published var fetchedMeetings = [MeetingEntity]()
-
-//    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \ContactEntity.name, ascending: true)], animation: .default)
-//    var fetchedContacts: FetchedResults<ContactEntity>
-
-//    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \MeetingEntity.date, ascending: true)], animation: .default)
-//    var fetchedMeetings: FetchedResults<MeetingEntity>
+    @Published var filteredContacts = [ContactEntity]()
+    @Published var searchText = ""
     
-    let nm = NotificationManager()
+    private let notificationManager = NotificationManager.shared
+    private let coreDataManager = CoreDataManager.shared
+    private let hapticManager = HapticManager.shared
     
     @Published var isSignedIntoiCloud = false
     @Published var error = ""
@@ -32,13 +29,20 @@ class ViewModel: ObservableObject {
     @Published var telephone = ""
     @Published var permissionStatus = false
     
+    var isSearching: Bool {
+        !searchText.isEmpty
+    }
+    
+    private var cancellables = Set<AnyCancellable>()
+    
     init() {
 //        requestPermission()
 //        getiCloudStatus()
 //        fetchiCloudUserRecordID()
         
         getContacts()
-        getMeetings()
+//        getMeetings()
+        addSubscribers()
     }
     
     func getContacts() {
@@ -54,7 +58,7 @@ class ViewModel: ObservableObject {
         }
     }
     
-    func getMeetings() {
+    func getAllMeetings() {
         let request = NSFetchRequest<MeetingEntity>(entityName: "MeetingEntity")
         let sort = NSSortDescriptor(keyPath: \MeetingEntity.date, ascending: true)
         request.sortDescriptors = [sort]
@@ -67,8 +71,8 @@ class ViewModel: ObservableObject {
         }
     }
     
-    func getMeetings(forContact contact: ContactEntity) {
-        let request = NSFetchRequest<MeetingEntity>(entityName: "EmployeeEntity")
+    func getMeetingsOfContact(forContact contact: ContactEntity) {
+        let request = NSFetchRequest<MeetingEntity>(entityName: "MeetingEntity")
         let filter = NSPredicate(format: "contact == %@", contact)
         request.predicate = filter
         
@@ -207,17 +211,17 @@ class ViewModel: ObservableObject {
     }
     
     func deleteNotification(contact: ContactEntity) {
-        nm.cancelNotification(id: contact.id!.uuidString)
+        notificationManager.cancelNotification(id: contact.id!.uuidString)
     }
     
     func setNotification(contact: ContactEntity, component: Components, lastContact: Date, interval: Int) {
-        nm.cancelNotification(id: contact.id!.uuidString)
+        notificationManager.cancelNotification(id: contact.id!.uuidString)
         let date = getNextEventDate(component: Components(rawValue: component.rawValue)!, lastContact: lastContact, interval: Int(interval))
         let calendar = Calendar.current
         let year = calendar.component(.year, from: date)
         let month = calendar.component(.month, from: date)
         let day = calendar.component(.day, from: date)
-        nm.scheduleNotification(contact: contact, year: year, month: month, day: day)
+        notificationManager.scheduleNotification(contact: contact, year: year, month: month, day: day)
     }
 }
 
@@ -241,10 +245,12 @@ extension ViewModel {
             newMeeting.describe = meetingDescribe
             newMeeting.feeling = meetingFeeling.rawValue
             
-            newContact.meetings!.adding(newMeeting)
-            newMeeting.contact = newContact
+            newContact.addToMeetings(newMeeting)
             
-            save()
+            coreDataManager.save()
+            
+            fetchedContacts.removeAll()
+            getContacts()
             
             if reminder {
                 setNotification(contact: newContact, component: component, lastContact: lastContact, interval: distance)
@@ -253,27 +259,38 @@ extension ViewModel {
     }
     
     func createMeeting(contact: ContactEntity, meetingDate: Date, meetingDescribe: String, meetingFeeling: Feelings) {
+        
         withAnimation {
-            let maxDate = fetchedMeetings.filter({$0.contact == contact}).max(by: {$0.date! > $1.date!})!.date!
+            
+            getMeetingsOfContact(forContact: contact)
+            let maxDate = fetchedMeetings.max(by: {$0.date! > $1.date!})!.date!
+            
             let newMeeting = MeetingEntity(context: coreDataManager.context)
+            newMeeting.id = UUID()
             newMeeting.date = meetingDate
             newMeeting.describe = meetingDescribe
             newMeeting.feeling = meetingFeeling.rawValue
-            newMeeting.contact = contact
+            
+            contact.addToMeetings(newMeeting)
             
             if meetingDate > maxDate {
                 contact.lastContact = meetingDate
                 setNotification(contact: contact, component: Components(rawValue: contact.component!)!, lastContact: meetingDate, interval: Int(contact.distance))
             }
             
-            save()
+            coreDataManager.save()
+            
+            fetchedMeetings.removeAll()
+            getMeetingsOfContact(forContact: contact)
             
             if contact.reminder {
                 if meetingDate > maxDate {
                     setNotification(contact: contact, component: Components(rawValue: contact.component!)!, lastContact: meetingDate, interval: Int(contact.distance))
                 }
             }
+            
         }
+        
     }
     
     func editContact(contact: ContactEntity, name: String, birthday: Date, isFavorite: Bool, distance: Int, component: Components, lastContact: Date, reminder: Bool, meetingDate: Date, meetingDescribe: String, meetingFeeling: Feelings) {
@@ -286,7 +303,10 @@ extension ViewModel {
             contact.lastContact = lastContact
             contact.reminder = reminder
             
-            save()
+            coreDataManager.save()
+            
+            fetchedContacts.removeAll()
+            getContacts()
             
             if contact.meetings == nil {
                 createMeeting(contact: contact, meetingDate: meetingDate, meetingDescribe: meetingDescribe, meetingFeeling: meetingFeeling)
@@ -300,9 +320,26 @@ extension ViewModel {
         }
     }
     
+    func deleteContact(offsets: IndexSet) {
+        withAnimation {
+            offsets.map { fetchedContacts[$0] }.forEach(coreDataManager.context.delete)
+
+            do {
+                try coreDataManager.context.save()
+            } catch {
+                // Replace this implementation with code to handle the error appropriately.
+                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
+                let nsError = error as NSError
+                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+            }
+            fetchedContacts.removeAll()
+            getContacts()
+        }
+    }
+    
     func editMeeting(contact: ContactEntity, meeting: MeetingEntity, meetingDate: Date, meetingDescribe: String, meetingFeeling: Feelings) {
         withAnimation {
-            let maxDate = fetchedMeetings.filter({$0.contact == contact}).max(by: {$0.date! > $1.date!})!.date!
+            let maxDate = fetchedMeetings.max(by: {$0.date! > $1.date!})!.date!
             meeting.date = meetingDate
             meeting.describe = meetingDescribe
             meeting.feeling = meetingFeeling.rawValue
@@ -312,42 +349,77 @@ extension ViewModel {
                 setNotification(contact: contact, component: Components(rawValue: contact.component!)!, lastContact: meetingDate, interval: Int(contact.distance))
             }
             
-            save()
+            coreDataManager.save()
+            
+            fetchedMeetings.removeAll()
+            fetchedContacts.removeAll()
+            getContacts()
+            getMeetingsOfContact(forContact: contact)
         }
     }
     
-    func deleteMeeting(offsets: IndexSet) {
+    func deleteMeeting(contact: ContactEntity, offsets: IndexSet) {
         withAnimation {
             offsets.map { fetchedMeetings[$0] }.forEach(coreDataManager.context.delete)
-            save()
+            
+            coreDataManager.save()
+            
+            fetchedMeetings.removeAll()
+            fetchedContacts.removeAll()
+            getContacts()
+            getMeetingsOfContact(forContact: contact)
         }
     }
     
     func toggleFavorite(contact: ContactEntity) {
         contact.isFavorite.toggle()
-        save()
+        
+        coreDataManager.save()
+        
+        fetchedContacts.removeAll()
+        getContacts()
     }
     
     func updateLastContact(contact: ContactEntity) {
-        let array = fetchedMeetings.filter({$0.contact == contact})
+        let array = fetchedMeetings
         let date = array.map{$0.date!}.max()
         contact.lastContact = date
-        save()
-    }
-    
-    func deleteMeetingFromMeetingView(meeting: MeetingEntity) {
-        coreDataManager.context.delete(meeting)
-        save()
-    }
-    
-    func save() {
-        fetchedContacts.removeAll()
-        fetchedMeetings.removeAll()
         
-        DispatchQueue.main.async {
-            self.coreDataManager.save()
-            self.getContacts()
-            self.getMeetings()
+        coreDataManager.save()
+        
+        fetchedContacts.removeAll()
+        getContacts()
+    }
+    
+    func deleteMeetingFromMeetingView(contact: ContactEntity, meeting: MeetingEntity) {
+        coreDataManager.context.delete(meeting)
+        
+        coreDataManager.save()
+        
+        fetchedMeetings.removeAll()
+        fetchedContacts.removeAll()
+        getContacts()
+        getMeetingsOfContact(forContact: contact)
+    }
+    
+    private func filterContacts(searchText: String) {
+        guard !searchText.isEmpty else {
+            filteredContacts = []
+            return
         }
+        let search = searchText.lowercased()
+        filteredContacts = fetchedContacts.filter({ contact in
+            let nameContainsSearch = contact.name!.lowercased().contains(search)
+            return nameContainsSearch
+        })
+    }
+    
+    private func addSubscribers() {
+        $searchText
+            .debounce(for: 0.3, scheduler: DispatchQueue.main)
+            .sink { [weak self] searchText in
+                self?.filterContacts(searchText: searchText)
+            }
+            .store(in: &cancellables)
     }
 }

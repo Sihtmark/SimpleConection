@@ -41,7 +41,7 @@ struct ContactListView: View {
                         .foregroundColor(.theme.secondaryText)
                         .padding(.top, 40)
                 }
-                ForEach(vm.fetchedContacts) { contact in
+                ForEach(vm.isSearching ? vm.filteredContacts : vm.fetchedContacts) { contact in
                     ZStack(alignment: .leading) {
                         ContactCellView(contact: contact)
                         NavigationLink {
@@ -70,7 +70,7 @@ struct ContactListView: View {
                     })
                     .listRowSeparator(.hidden)
                 }
-                .onDelete(perform: deleteContact)
+                .onDelete(perform: vm.deleteContact)
 //                .onMove(perform: vm.moveContact)
             }
             .ignoresSafeArea(edges: .bottom)
@@ -78,6 +78,7 @@ struct ContactListView: View {
             .frame(maxWidth: 550)
             .listStyle(.inset)
             .navigationTitle("Contacts")
+            .searchable(text: $vm.searchText, prompt: Text("Search contacts..."))
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
@@ -117,20 +118,7 @@ struct ContactListView: View {
         }
     }
     
-    func deleteContact(offsets: IndexSet) {
-        withAnimation {
-            offsets.map { vm.fetchedContacts[$0] }.forEach(vm.coreDataManager.context.delete)
-
-            do {
-                try vm.coreDataManager.context.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
-        }
-    }
+    
 }
 
 struct AllCustomersView_Previews: PreviewProvider {

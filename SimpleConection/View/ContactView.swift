@@ -20,6 +20,7 @@ struct ContactView: View {
     @State private var feeling = Feelings.notTooBad
     @State private var describe = ""
     @State private var isFavorite = false
+    @State private var meetingSheet: MeetingEntity? = nil
     
     private var dateFormatter: DateFormatter {
         let formatter = DateFormatter()
@@ -48,7 +49,7 @@ struct ContactView: View {
         .frame(maxWidth: 550)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Save") {
+                Button("Edit") {
                     isEditing.toggle()
                 }
                 .disabled(name.count < 3)
@@ -60,7 +61,12 @@ struct ContactView: View {
         .sheet(isPresented: $isAdding, content: {
             addMeetingSheet
         })
+        .sheet(item: $meetingSheet, content: { meeting in
+            MeetingView(meeting: meeting, contact: contact)
+        })
         .onAppear {
+            vm.fetchedMeetings.removeAll()
+            vm.getMeetingsOfContact(forContact: contact)
             name = contact.name!
             selectedDate = contact.birthday!
             isFavorite = contact.isFavorite
@@ -140,9 +146,9 @@ extension ContactView {
     }
     
     var eventsSection: some View {
-        ForEach(vm.fetchedMeetings.filter({$0.contact == contact})) { meeting in
-            NavigationLink {
-                MeetingView(meeting: meeting)
+        ForEach(vm.fetchedMeetings) { meeting in
+            Button {
+                meetingSheet = meeting
             } label: {
                 ZStack(alignment: .topLeading) {
                     RoundedRectangle(cornerRadius: 20)

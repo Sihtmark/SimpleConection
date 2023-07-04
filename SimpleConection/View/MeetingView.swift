@@ -12,6 +12,7 @@ struct MeetingView: View {
     @EnvironmentObject private var vm: ViewModel
     @Environment(\.dismiss) private var dismiss
     @State var meeting: MeetingEntity
+    @State var contact: ContactEntity
     @State private var date = Date()
     @State private var feeling = Feelings.notTooBad
     @State private var describe = ""
@@ -85,8 +86,8 @@ struct MeetingView: View {
                 HStack {
                     Spacer()
                     Button(role: .destructive) {
-                        vm.deleteMeetingFromMeetingView(meeting: meeting)
-                        vm.updateLastContact(contact: meeting.contact!)
+                        vm.deleteMeetingFromMeetingView(contact: meeting.contact!, meeting: meeting)
+                        vm.updateLastContact(contact: contact)
                         dismiss()
                     } label: {
                         Text("Delete")
@@ -114,11 +115,11 @@ struct MeetingView: View {
 
 struct EventView_Previews: PreviewProvider {
     static var previews: some View {
-        MeetingView(meeting: ViewModel().fetchedMeetings.first!)
+        MeetingView(meeting: ViewModel().fetchedMeetings.first!, contact: ViewModel().fetchedContacts.first!)
             .environment(\.managedObjectContext, CoreDataManager.preview.container.viewContext)
             .environmentObject(ViewModel())
             .preferredColorScheme(.light)
-        MeetingView(meeting: ViewModel().fetchedMeetings.first!)
+        MeetingView(meeting: ViewModel().fetchedMeetings.first!, contact: ViewModel().fetchedContacts.first!)
             .environment(\.managedObjectContext, CoreDataManager.preview.container.viewContext)
             .environmentObject(ViewModel())
             .preferredColorScheme(.dark)

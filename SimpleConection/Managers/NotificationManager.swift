@@ -12,6 +12,8 @@ import CoreLocation
 
 class NotificationManager {
     
+    static let shared = NotificationManager()
+    
     func requestAuthorization() {
         let options: UNAuthorizationOptions = [.alert, .sound]
         UNUserNotificationCenter.current()

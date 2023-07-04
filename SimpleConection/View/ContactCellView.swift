@@ -26,14 +26,14 @@ struct ContactCellView: View {
                 .frame(height: 70)
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(contact.name!)
+                    Text(contact.name ?? "")
                         .bold()
                         .font(.headline)
                         .foregroundColor(.theme.standard)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 Text(vm.daysFromLastEventCell(lastEvent: contact.lastContact ?? Date()))
-                    .foregroundColor(vm.getNextEventDate(component: Components(rawValue: contact.component!)!, lastContact: contact.lastContact ?? Date(), interval: Int(contact.distance)) > Date() ? .theme.green : .theme.red)
+                    .foregroundColor(vm.getNextEventDate(component: Components(rawValue: contact.component ?? "") ?? Components.day, lastContact: contact.lastContact ?? Date(), interval: Int(contact.distance)) > Date() ? .theme.green : .theme.red)
                     .font(.caption)
                     .bold()
                     .padding(.trailing)
