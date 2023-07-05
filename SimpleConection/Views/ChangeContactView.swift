@@ -22,12 +22,6 @@ struct ChangeContactView: View {
     @State private var describe = ""
     @FocusState private var inFocus: Bool
     
-    private var dateFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd.MM.yyyy"
-        return formatter
-    }
-    
     var dateRange: ClosedRange<Date> {
         var dateComponents = DateComponents()
         dateComponents.year = 1850
@@ -40,30 +34,19 @@ struct ChangeContactView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 30) {
-            HStack {
-                Button {
-                    dismiss()
-                } label: {
-                    Label("Back", systemImage: "chevron.left")
-                }
-                Spacer()
+        ScrollView {
+            VStack(alignment: .leading, spacing: 30) {
+                mainSection
+                meetingTrackerSection
+                saveButton
             }
-            .padding(.top, 20)
-            ScrollView {
-                VStack(alignment: .leading, spacing: 30) {
-                    mainSection
-                    meetingTrackerSection
-                    saveButton
-                    Spacer()
-                }
-            }
+            .padding(.top, 30)
         }
         .onAppear {
             name = contact.name!
             birthday = contact.birthday!
             lastMeeting = contact.lastContact ?? Date()
-            component = Components(rawValue: contact.component!)!
+            component = Components(rawValue: contact.component!) ?? .day
             distance = Int(contact.distance)
             reminder = contact.reminder
         }
@@ -102,6 +85,7 @@ struct ChangeContactView_Previews: PreviewProvider {
 }
 
 extension ChangeContactView {
+    
     var mainSection: some View {
         VStack(alignment: .leading, spacing: 30) {
             TextField("Name", text: $name)
@@ -109,7 +93,6 @@ extension ChangeContactView {
                 .textFieldStyle(.roundedBorder)
                 .autocorrectionDisabled()
             DatePicker("Birthday", selection: $birthday, in: dateRange, displayedComponents: .date)
-//                .environment(\.locale, Locale.init(identifier: "ru"))
                 .foregroundColor(.theme.standard)
         }
     }
@@ -117,7 +100,6 @@ extension ChangeContactView {
         VStack(alignment: .leading, spacing: 30) {
             if contact.meetings == nil {
                 DatePicker("Last contact", selection: $lastMeeting, in: dateRange, displayedComponents: .date)
-//                    .environment(\.locale, Locale.init(identifier: "ru"))
                     .foregroundColor(.theme.standard)
                 VStack {
                     Picker("", selection: $feeling) {

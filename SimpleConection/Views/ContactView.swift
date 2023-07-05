@@ -24,7 +24,7 @@ struct ContactView: View {
     
     private var dateFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.dateFormat = "dd.MM.yyyy"
+        formatter.dateStyle = .long
         return formatter
     }
     
@@ -57,12 +57,17 @@ struct ContactView: View {
         }
         .sheet(isPresented: $isEditing, content: {
             ChangeContactView(contact: $contact)
+                .presentationDragIndicator(.visible)
+                .presentationDetents([.fraction(0.7), .large])
         })
         .sheet(isPresented: $isAdding, content: {
             addMeetingSheet
+                .presentationDragIndicator(.visible)
+                .presentationDetents([.fraction(0.7), .large])
         })
         .sheet(item: $meetingSheet, content: { meeting in
             MeetingView(meeting: meeting, contact: contact)
+                .presentationDragIndicator(.visible)
         })
         .onAppear {
             vm.fetchedMeetings.removeAll()
@@ -94,34 +99,17 @@ struct ContentView_Previews: PreviewProvider {
 extension ContactView {
     var titleSection: some View {
         VStack(spacing: 15) {
-//            NavigationLink {
-//                ContactInfoView(contact: contact)
-//            } label: {
-//                ZStack {
-//                    Circle()
-//                        .fill(.white)
-//                        .frame(width: 80)
-//                        .shadow(radius: 3)
-//                    Circle()
-//                        .fill(Color(uiColor: .secondarySystemFill))
-//                        .frame(width: 77)
-//                    Image("\(contact.annualSignStruct.annualSign)")
-//                        .resizable()
-//                        .scaledToFit()
-//                        .frame(width: 45, height: 45)
-//                }
-//            }
             VStack {
                 Text(contact.name!)
                     .font(.title)
                     .foregroundColor(.theme.standard)
             }
             VStack(spacing: 5) {
-                Text("Last contact \(dateFormatter.string(from: contact.lastContact ?? Date()))")
-                Text(vm.daysFromLastEvent(lastEvent: contact.lastContact ?? Date()))
+                Text("Last contact: \(dateFormatter.string(from: contact.lastContact ?? Date()))")
+                Text(vm.daysFromLastEvent(lastEvent: contact.lastContact ?? Date(), component: Components(rawValue: contact.component!) ?? .day, Interval: Int(contact.distance)))
             }
             .font(.callout)
-            .foregroundColor(vm.getNextEventDate(component: Components(rawValue: contact.component!)!, lastContact: contact.lastContact ?? Date(), interval: Int(contact.distance)) > Date() ? .theme.green : .theme.red)
+            .foregroundColor(vm.getNextEventDate(component: Components(rawValue: contact.component!) ?? .day, lastContact: contact.lastContact ?? Date(), interval: Int(contact.distance)) > Date() ? .theme.green : .theme.red)
             ZStack {
                 Button {
                     isFavorite.toggle()
@@ -174,71 +162,59 @@ extension ContactView {
     }
     
     var addMeetingSheet: some View {
-        VStack {
-            HStack {
-                Button {
-                    isAdding.toggle()
-                } label: {
-                    Label("Back", systemImage: "chevron.left")
-                }
-                Spacer()
-            }
-            .padding(.top, 20)
-            ScrollView {
-                VStack(alignment: .leading, spacing: 30) {
-                    HStack {
-                        Spacer()
-                        DatePicker(selection: $date, in: dateRange, displayedComponents: .date) {}
-                            .foregroundColor(.theme.accent)
-                            .datePickerStyle(.wheel)
-                            .frame(width: 320, height: 180)
-                            .padding(.trailing, 7.5)
-                            .overlay(alignment: .bottom) {
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(.gray.opacity(0.2))
-                                    .allowsHitTesting(false)
-                        }
-                        Spacer()
-                    }
-                    .padding(.top, 20)
-                    Picker("", selection: $feeling) {
-                        ForEach(Feelings.allCases, id: \.self) { feeling in
-                            Text(feeling.rawValue).tag(feeling)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    TextEditor(text: $describe)
-                        .frame(height: 200)
-                        .foregroundColor(.theme.secondaryText)
-                        .padding(10)
-                        .overlay {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 30) {
+                HStack {
+                    Spacer()
+                    DatePicker(selection: $date, in: dateRange, displayedComponents: .date) {}
+                        .foregroundColor(.theme.accent)
+                        .datePickerStyle(.wheel)
+                        .frame(width: 320, height: 220)
+                        .padding(.trailing, 7.5)
+                        .overlay(alignment: .bottom) {
                             RoundedRectangle(cornerRadius: 20)
                                 .fill(.gray.opacity(0.2))
                                 .allowsHitTesting(false)
-                        }
-                    HStack {
-                        Spacer()
-                        Button {
-                            vm.createMeeting(contact: contact, meetingDate: date, meetingDescribe: describe, meetingFeeling: feeling)
-//                            contact = contact.addMeeting(contact: contact.contact, date: date, feeling: feeling, describe: describe)
-                            vm.updateLastContact(contact: contact)
-                            isAdding.toggle()
-                            date = Date()
-                            feeling = .notTooBad
-                            describe = ""
-                        } label: {
-                            Text("Save")
-                                .bold()
-                                .padding(10)
-                                .padding(.horizontal)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        Spacer()
                     }
                     Spacer()
                 }
+                Picker("", selection: $feeling) {
+                    ForEach(Feelings.allCases, id: \.self) { feeling in
+                        Text(feeling.rawValue).tag(feeling)
+                    }
+                }
+                .pickerStyle(.segmented)
+                TextEditor(text: $describe)
+                    .frame(height: 50)
+                    .foregroundColor(.theme.secondaryText)
+                    .padding(10)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(.gray.opacity(0.2))
+                            .allowsHitTesting(false)
+                    }
+                HStack {
+                    Spacer()
+                    Button {
+                        vm.createMeeting(contact: contact, meetingDate: date, meetingDescribe: describe, meetingFeeling: feeling)
+                        vm.updateLastContact(contact: contact)
+                        isAdding.toggle()
+                        date = Date()
+                        feeling = .notTooBad
+                        describe = ""
+                    } label: {
+                        Text("Save")
+                            .bold()
+                            .padding(10)
+                            .padding(.horizontal)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    Spacer()
+                }
+                Spacer()
             }
+            .padding(.top, 30)
+            .padding(.horizontal)
         }
-        .padding(.horizontal)
     }
 }

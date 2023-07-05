@@ -24,12 +24,6 @@ struct AddNewContactView: View {
     @FocusState private var nameInFocus: Bool
     @FocusState private var describeInFocus: Bool
     
-    private var dateFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd.MM.yyyy"
-        return formatter
-    }
-    
     var dateRange: ClosedRange<Date> {
         var dateComponents = DateComponents()
         dateComponents.year = 1850
@@ -43,22 +37,21 @@ struct AddNewContactView: View {
     
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 30) {
+            VStack(alignment: .leading, spacing: 20) {
                 mainSection
                 meetingTrackerSection
                 saveButton
             }
+            .padding(.top, 30)
+            .padding(.horizontal)
+            .frame(maxWidth: 550)
         }
-        .frame(maxWidth: 550)
-        .padding()
         .navigationTitle("New customer")
         .navigationBarTitleDisplayMode(.inline)
         .scrollIndicators(ScrollIndicatorVisibility.hidden)
         .ignoresSafeArea(edges: .bottom)
         .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {
-                self.nameInFocus = true
-            }
+            nameInFocus = true
         }
         .onTapGesture(count: 2) {
             if describeInFocus {
@@ -81,7 +74,7 @@ struct CreateCustomerView_Previews: PreviewProvider {
 
 extension AddNewContactView {
     var mainSection: some View {
-        VStack(alignment: .leading, spacing: 30) {
+        VStack(alignment: .leading, spacing: 20) {
             HStack {
                 TextField("Name", text: $name)
                     .foregroundColor(.theme.standard)
@@ -99,14 +92,12 @@ extension AddNewContactView {
                 .padding(.horizontal, 5)
             }
             DatePicker("Birthday:", selection: $selectedDate, in: dateRange, displayedComponents: .date)
-            //                .environment(\.locale, Locale.init(identifier: "ru"))
                 .foregroundColor(.theme.standard)
         }
     }
     var meetingTrackerSection: some View {
-        VStack(alignment: .leading, spacing: 30) {
+        VStack(alignment: .leading, spacing: 20) {
             DatePicker("Last contact:", selection: $lastMeeting, in: dateRange, displayedComponents: .date)
-            //                .environment(\.locale, Locale.init(identifier: "ru"))
                 .foregroundColor(.theme.standard)
             VStack {
                 Picker("", selection: $feeling) {
@@ -127,7 +118,7 @@ extension AddNewContactView {
                 }
                 TextEditor(text: $describe)
                     .focused($describeInFocus)
-                    .frame(height: 100)
+                    .frame(height: 50)
                     .foregroundColor(.theme.secondaryText)
                     .padding(10)
                     .overlay {
@@ -188,5 +179,6 @@ extension AddNewContactView {
             .disabled(name.count < 1)
             Spacer()
         }
+        .padding(.bottom, 50)
     }
 }

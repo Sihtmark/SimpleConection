@@ -59,10 +59,8 @@ final class ViewModel: ObservableObject {
             sort = NSSortDescriptor(keyPath: \ContactEntity.isFavorite, ascending: true)
         }
         request.sortDescriptors = [sort]
-//        let filter = NSPredicate(format: "name == %@", "Apple")
-//        request.predicate = filter
         do {
-            var contacts = try coreDataManager.context.fetch(request)
+            let contacts = try coreDataManager.context.fetch(request)
             switch order {
             case .alphabetical:
                 fetchedContacts = contacts
@@ -82,8 +80,6 @@ final class ViewModel: ObservableObject {
         let request = NSFetchRequest<MeetingEntity>(entityName: "MeetingEntity")
         let sort = NSSortDescriptor(keyPath: \MeetingEntity.date, ascending: true)
         request.sortDescriptors = [sort]
-//        let filter = NSPredicate(format: "name == %@", "Apple")
-//        request.predicate = filter
         do {
             fetchedMeetings = try coreDataManager.context.fetch(request)
         } catch let error {
@@ -102,81 +98,6 @@ final class ViewModel: ObservableObject {
             print("Error fetching meetings for \(contact): \(error.localizedDescription)")
         }
     }
-    
-    // ‼️
-//    func moveContact(from: IndexSet, to: Int) {
-//        fetchedContacts
-//        var contacts = fetchedContacts.map{$0}
-//        contacts.move(fromOffsets: from, toOffset: to)
-//    }
-    
-//    enum CloudKitError: String {
-//        case iCloudAccountNotDetermined
-//        case iCloudAccountRestricted
-//        case iCloudAccountNotFound
-//        case iCloudAccountTemporarilyUnavailable
-//        case iCloudAccountUnknown
-//    }
-    
-//    func getiCloudStatus() {
-//        CKContainer.default().accountStatus { [weak self] returnedStatus, returnedError in
-//            DispatchQueue.main.async {
-//                switch returnedStatus {
-//                case .couldNotDetermine:
-//                    self?.error = CloudKitError.iCloudAccountNotDetermined.rawValue
-//                case .available:
-//                    self?.isSignedIntoiCloud = true
-//                case .restricted:
-//                    self?.error = CloudKitError.iCloudAccountRestricted.rawValue
-//                case .noAccount:
-//                    self?.error = CloudKitError.iCloudAccountNotFound.rawValue
-//                case .temporarilyUnavailable:
-//                    self?.error = CloudKitError.iCloudAccountTemporarilyUnavailable.rawValue
-//                @unknown default:
-//                    self?.error = CloudKitError.iCloudAccountUnknown.rawValue
-//                }
-//            }
-//        }
-//    }
-//
-//    func discoveriCloudUser(id: CKRecord.ID) {
-//        CKContainer.default().discoverUserIdentity(withUserRecordID: id) { [weak self] returnedIdentity, returnedError in
-//            DispatchQueue.main.async {
-//
-//                if let name = returnedIdentity?.nameComponents?.familyName {
-//                    self?.userName = name
-//                }
-//
-//                // We can't get email because we get permission by id. We can get email if we get permission by email
-//                if let email = returnedIdentity?.lookupInfo?.emailAddress {
-//                    self?.email = email
-//                }
-//
-//                // We can't get number because we get permission by id. We can get number if we get permission by number
-//                if let phone = returnedIdentity?.lookupInfo?.phoneNumber {
-//                    self?.telephone = phone
-//                }
-//            }
-//        }
-//    }
-//
-//    func fetchiCloudUserRecordID() {
-//        CKContainer.default().fetchUserRecordID { [weak self] returnedID, returnedError in
-//            if let id = returnedID {
-//                self?.discoveriCloudUser(id: id)
-//            }
-//        }
-//    }
-    
-//    func requestPermission() {
-//        CKContainer.default().requestApplicationPermission([.userDiscoverability]) { [weak self] returnedStatus, returnedError in
-//            DispatchQueue.main.async {
-//                if returnedStatus == .granted {
-//                    self?.permissionStatus = true
-//                }
-//            }
-//        }
-//    }
     
     func extractDate(date: Date, format: String) -> String {
         let formatter = DateFormatter()
@@ -206,27 +127,49 @@ final class ViewModel: ObservableObject {
         }
     }
     
-    func daysFromLastEvent(lastEvent: Date) -> String {
+    func getDayCountFromLastContactToNext(component: Components, lastContact: Date, interval: Int) -> Int {
         let calendar = Calendar.current
-        let distance = calendar.dateComponents([.day], from: lastEvent, to: Date())
-        let days = distance.day!
-        switch days {
-        case 1, 21:
-            return "\(days) day left"
-        default:
-            return "\(days) days left"
+        switch component {
+        case .day:
+            let nextContactDay = calendar.date(byAdding: Calendar.Component.day, value: interval, to: lastContact)!
+            let distance = calendar.dateComponents([.day], from: lastContact, to: nextContactDay)
+            return distance.day!
+        case .week:
+            let nextContactDay = calendar.date(byAdding: Calendar.Component.day, value: (interval * 7), to: lastContact)!
+            let distance = calendar.dateComponents([.day], from: lastContact, to: nextContactDay)
+            return distance.day!
+        case .month:
+            let nextContactDay = calendar.date(byAdding: Calendar.Component.month, value: interval, to: lastContact)!
+            let distance = calendar.dateComponents([.day], from: lastContact, to: nextContactDay)
+            return distance.day!
+        case .year:
+            let nextContactDay = calendar.date(byAdding: Calendar.Component.year, value: interval, to: lastContact)!
+            let distance = calendar.dateComponents([.day], from: lastContact, to: nextContactDay)
+            return distance.day!
         }
     }
     
-    func daysFromLastEventCell(lastEvent: Date) -> String {
+    func daysFromLastEvent(lastEvent: Date, component: Components, Interval: Int) -> String {
         let calendar = Calendar.current
         let distance = calendar.dateComponents([.day], from: lastEvent, to: Date())
         let days = distance.day!
         switch days {
         case 1, 21:
-            return "\(days) day"
+            return "\(days)/\(getDayCountFromLastContactToNext(component: component, lastContact: lastEvent, interval: Interval)) day left"
         default:
-            return "\(days) days"
+            return "\(days)/\(getDayCountFromLastContactToNext(component: component, lastContact: lastEvent, interval: Interval)) days left"
+        }
+    }
+    
+    func daysFromLastEventCell(lastEvent: Date, component: Components, interval: Int) -> String {
+        let calendar = Calendar.current
+        let distance = calendar.dateComponents([.day], from: lastEvent, to: Date())
+        let days = distance.day!
+        switch days {
+        case 1, 21:
+            return "\(days)/\(getDayCountFromLastContactToNext(component: component, lastContact: lastEvent, interval: interval)) day left"
+        default:
+            return "\(days)/\(getDayCountFromLastContactToNext(component: component, lastContact: lastEvent, interval: interval)) days left"
         }
     }
     
@@ -455,4 +398,82 @@ extension ViewModel {
             getContacts(order: .favorites)
         }
     }
+}
+
+// MARK: CloudKit
+extension ViewModel {
+    // ‼️
+//    func moveContact(from: IndexSet, to: Int) {
+//        fetchedContacts
+//        var contacts = fetchedContacts.map{$0}
+//        contacts.move(fromOffsets: from, toOffset: to)
+//    }
+    
+//    enum CloudKitError: String {
+//        case iCloudAccountNotDetermined
+//        case iCloudAccountRestricted
+//        case iCloudAccountNotFound
+//        case iCloudAccountTemporarilyUnavailable
+//        case iCloudAccountUnknown
+//    }
+    
+//    func getiCloudStatus() {
+//        CKContainer.default().accountStatus { [weak self] returnedStatus, returnedError in
+//            DispatchQueue.main.async {
+//                switch returnedStatus {
+//                case .couldNotDetermine:
+//                    self?.error = CloudKitError.iCloudAccountNotDetermined.rawValue
+//                case .available:
+//                    self?.isSignedIntoiCloud = true
+//                case .restricted:
+//                    self?.error = CloudKitError.iCloudAccountRestricted.rawValue
+//                case .noAccount:
+//                    self?.error = CloudKitError.iCloudAccountNotFound.rawValue
+//                case .temporarilyUnavailable:
+//                    self?.error = CloudKitError.iCloudAccountTemporarilyUnavailable.rawValue
+//                @unknown default:
+//                    self?.error = CloudKitError.iCloudAccountUnknown.rawValue
+//                }
+//            }
+//        }
+//    }
+//
+//    func discoveriCloudUser(id: CKRecord.ID) {
+//        CKContainer.default().discoverUserIdentity(withUserRecordID: id) { [weak self] returnedIdentity, returnedError in
+//            DispatchQueue.main.async {
+//
+//                if let name = returnedIdentity?.nameComponents?.familyName {
+//                    self?.userName = name
+//                }
+//
+//                // We can't get email because we get permission by id. We can get email if we get permission by email
+//                if let email = returnedIdentity?.lookupInfo?.emailAddress {
+//                    self?.email = email
+//                }
+//
+//                // We can't get number because we get permission by id. We can get number if we get permission by number
+//                if let phone = returnedIdentity?.lookupInfo?.phoneNumber {
+//                    self?.telephone = phone
+//                }
+//            }
+//        }
+//    }
+//
+//    func fetchiCloudUserRecordID() {
+//        CKContainer.default().fetchUserRecordID { [weak self] returnedID, returnedError in
+//            if let id = returnedID {
+//                self?.discoveriCloudUser(id: id)
+//            }
+//        }
+//    }
+    
+//    func requestPermission() {
+//        CKContainer.default().requestApplicationPermission([.userDiscoverability]) { [weak self] returnedStatus, returnedError in
+//            DispatchQueue.main.async {
+//                if returnedStatus == .granted {
+//                    self?.permissionStatus = true
+//                }
+//            }
+//        }
+//    }
 }

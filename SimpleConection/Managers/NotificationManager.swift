@@ -28,7 +28,7 @@ class NotificationManager {
     
     func scheduleNotification(contact: ContactEntity, year: Int, month: Int, day: Int) {
         let content = UNMutableNotificationContent()
-        content.title = "\(contact.name!) ждет общения! ⏰"
+        content.title = "It's time to talk to \(contact.name!)! ⏰"
         content.sound = .default
 
         var dateComponents = DateComponents()

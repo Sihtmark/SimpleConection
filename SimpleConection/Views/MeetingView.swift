@@ -37,7 +37,7 @@ struct MeetingView: View {
                     DatePicker(selection: $date, in: dateRange, displayedComponents: .date) {}
                         .foregroundColor(.theme.accent)
                         .datePickerStyle(.wheel)
-                        .frame(width: 320, height: 180)
+                        .frame(width: 320, height: 220)
                         .padding(.trailing, 7.5)
                         .overlay(alignment: .bottom) {
                             RoundedRectangle(cornerRadius: 20)
@@ -96,10 +96,11 @@ struct MeetingView: View {
                 }
                 Spacer()
             }
+            .padding(.top, 30)
+            .padding(.horizontal)
         }
         .ignoresSafeArea(edges: .bottom)
         .frame(maxWidth: 550)
-        .padding()
         .onAppear {
             date = meeting.date!
             feeling = Feelings(rawValue: meeting.feeling!)!

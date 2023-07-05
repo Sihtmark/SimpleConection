@@ -25,18 +25,17 @@ struct ContactCellView: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 70)
             HStack {
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text(contact.name ?? "")
                         .bold()
                         .font(.headline)
                         .foregroundColor(.theme.standard)
+                    Text(vm.daysFromLastEventCell(lastEvent: contact.lastContact ?? Date(), component: Components(rawValue: contact.component!) ?? .day, interval: Int(contact.distance)))
+                        .foregroundColor(vm.getNextEventDate(component: Components(rawValue: contact.component ?? "") ?? Components.day, lastContact: contact.lastContact ?? Date(), interval: Int(contact.distance)) > Date() ? .theme.green : .theme.red)
+                        .font(.caption)
+                        .padding(.trailing)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                Text(vm.daysFromLastEventCell(lastEvent: contact.lastContact ?? Date()))
-                    .foregroundColor(vm.getNextEventDate(component: Components(rawValue: contact.component ?? "") ?? Components.day, lastContact: contact.lastContact ?? Date(), interval: Int(contact.distance)) > Date() ? .theme.green : .theme.red)
-                    .font(.caption)
-                    .bold()
-                    .padding(.trailing)
                 VStack {
                     if contact.isFavorite {
                         Image(systemName: "star.fill")

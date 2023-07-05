@@ -17,6 +17,7 @@ struct ContactListView: View {
     @State private var describe = ""
     @State private var showAlert = false
     @State private var notifications = false
+    @State private var isAddingNewContact = false
     
     var dateRange: ClosedRange<Date> {
         var dateComponents = DateComponents()
@@ -78,24 +79,20 @@ struct ContactListView: View {
             .frame(maxWidth: 550)
             .listStyle(.inset)
             .navigationTitle("Contacts")
-            .searchable(text: $vm.searchText, prompt: Text("Search contacts..."))
+            .searchable(text: $vm.searchText, prompt: Text("Search contacts by name..."))
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu(content: {
                         Button("A-Z") {
-//                            vm.contactsOrder = .alphabetical
                             vm.changeContactsOrder(order: .alphabetical)
                         }
                         Button("Z-A") {
-//                            vm.contactsOrder = .backwards
                             vm.changeContactsOrder(order: .backwards)
                         }
                         Button("Favorites") {
-//                            vm.contactsOrder = .favorites
                             vm.changeContactsOrder(order: .favorites)
                         }
                         Button("Due date") {
-//                            vm.contactsOrder = .dueDate
                             vm.changeContactsOrder(order: .dueDate)
                         }
                     }, label: {
@@ -106,8 +103,8 @@ struct ContactListView: View {
                     EditButton()
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    NavigationLink {
-                        AddNewContactView()
+                    Button {
+                        isAddingNewContact.toggle()
                     } label: {
                         Image(systemName: "plus")
                     }
@@ -115,6 +112,12 @@ struct ContactListView: View {
             }
             .sheet(item: $isAdding) { contact in
                 sheetView
+                    .presentationDragIndicator(.visible)
+                    .presentationDetents([.fraction(0.7), .large])
+            }
+            .sheet(isPresented: $isAddingNewContact) {
+                AddNewContactView()
+                    .presentationDragIndicator(.visible)
             }
         }
     }
@@ -139,71 +142,59 @@ struct AllCustomersView_Previews: PreviewProvider {
 
 extension ContactListView {
     var sheetView: some View {
-        VStack {
-            HStack {
-                Button {
-                    isAdding = nil
-                } label: {
-                    Label("Back", systemImage: "chevron.left")
-                }
-                Spacer()
-            }
-            .padding(.top, 20)
-            ScrollView {
-                VStack(alignment: .leading, spacing: 30) {
-                    HStack {
-                        Spacer()
-                        DatePicker(selection: $date, in: dateRange, displayedComponents: .date) {}
-                            .foregroundColor(.theme.accent)
-                            .datePickerStyle(.wheel)
-                            .frame(width: 320, height: 180)
-                            .padding(.trailing, 7.5)
-                            .overlay(alignment: .bottom) {
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(.gray.opacity(0.2))
-                                    .allowsHitTesting(false)
-                        }
-                        Spacer()
-                    }
-                    .padding(.top, 20)
-                    Picker("", selection: $feeling) {
-                        ForEach(Feelings.allCases, id: \.self) { feeling in
-                            Text(feeling.rawValue).tag(feeling)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    TextEditor(text: $describe)
-                        .frame(height: 200)
-                        .foregroundColor(.theme.secondaryText)
-                        .padding(10)
-                        .overlay {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 30) {
+                HStack {
+                    Spacer()
+                    DatePicker(selection: $date, in: dateRange, displayedComponents: .date) {}
+                        .foregroundColor(.theme.accent)
+                        .datePickerStyle(.wheel)
+                        .frame(width: 320, height: 220)
+                        .padding(.trailing, 7.5)
+                        .overlay(alignment: .bottom) {
                             RoundedRectangle(cornerRadius: 20)
                                 .fill(.gray.opacity(0.2))
                                 .allowsHitTesting(false)
-                        }
-                    HStack {
-                        Spacer()
-                        Button {
-                            vm.createMeeting(contact: isAdding!, meetingDate: date, meetingDescribe: describe, meetingFeeling: feeling)
-//                            vm.addMeeting(contact: isAdding!, date: date, feeling: feeling, describe: describe)
-                            vm.updateLastContact(contact: isAdding!)
-                            isAdding = nil
-                            date = Date()
-                            feeling = .notTooBad
-                            describe = ""
-                        } label: {
-                            Text("Save")
-                                .bold()
-                                .padding(10)
-                                .padding(.horizontal)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        Spacer()
                     }
                     Spacer()
                 }
+                Picker("", selection: $feeling) {
+                    ForEach(Feelings.allCases, id: \.self) { feeling in
+                        Text(feeling.rawValue).tag(feeling)
+                    }
+                }
+                .pickerStyle(.segmented)
+                TextEditor(text: $describe)
+                    .frame(height: 50)
+                    .foregroundColor(.theme.secondaryText)
+                    .padding(10)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(.gray.opacity(0.2))
+                            .allowsHitTesting(false)
+                    }
+                HStack {
+                    Spacer()
+                    Button {
+                        vm.createMeeting(contact: isAdding!, meetingDate: date, meetingDescribe: describe, meetingFeeling: feeling)
+                        vm.updateLastContact(contact: isAdding!)
+                        isAdding = nil
+                        date = Date()
+                        feeling = .notTooBad
+                        describe = ""
+                    } label: {
+                        Text("Save")
+                            .bold()
+                            .padding(10)
+                            .padding(.horizontal)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    Spacer()
+                }
+                Spacer()
             }
+            .padding(.top, 30)
+            .padding(.horizontal)
         }
-        .padding(.horizontal)
     }
 }

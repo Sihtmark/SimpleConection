@@ -15,10 +15,10 @@ struct DayType: Codable, Hashable, Identifiable {
 }
 
 enum Components: String, Codable, CaseIterable, Hashable {
-    case day = "день"
-    case week = "неделя"
-    case month = "месяц"
-    case year = "год"
+    case day
+    case week
+    case month
+    case year
 }
 
 enum Feelings: String, Codable, CaseIterable, Hashable {
