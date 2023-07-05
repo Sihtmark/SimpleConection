@@ -29,9 +29,9 @@ enum Feelings: String, Codable, CaseIterable, Hashable {
     case veryGood = "😀"
 }
 
-enum FilterMainView: String, Codable, CaseIterable, Hashable {
-    case standardOrder = "Без фильтра"
-    case alphabeticalOrder = "По алфавиту"
-    case dueDateOrder = "По дате общения"
-    case favoritesOrder = "Избранные"
+enum ContactsOrder: String, Codable, CaseIterable, Hashable {
+    case alphabetical = "A-Z"
+    case backwards = "Z-A"
+    case dueDate = "Due date"
+    case favorites = "Favorites"
 }

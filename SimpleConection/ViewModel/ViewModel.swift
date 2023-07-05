@@ -17,17 +17,17 @@ final class ViewModel: ObservableObject {
     @Published var fetchedMeetings = [MeetingEntity]()
     @Published var filteredContacts = [ContactEntity]()
     @Published var searchText = ""
-    
-    private let notificationManager = NotificationManager.shared
-    private let coreDataManager = CoreDataManager.shared
-    private let hapticManager = HapticManager.shared
-    
     @Published var isSignedIntoiCloud = false
     @Published var error = ""
     @Published var userName = ""
     @Published var email = ""
     @Published var telephone = ""
     @Published var permissionStatus = false
+    @Published var contactsOrder: ContactsOrder = .alphabetical
+    
+    private let notificationManager = NotificationManager.shared
+    private let coreDataManager = CoreDataManager.shared
+    private let hapticManager = HapticManager.shared
     
     var isSearching: Bool {
         !searchText.isEmpty
@@ -40,19 +40,39 @@ final class ViewModel: ObservableObject {
 //        getiCloudStatus()
 //        fetchiCloudUserRecordID()
         
-        getContacts()
+        getContacts(order: contactsOrder)
 //        getMeetings()
         addSubscribers()
     }
     
-    func getContacts() {
+    func getContacts(order: ContactsOrder) {
         let request = NSFetchRequest<ContactEntity>(entityName: "ContactEntity")
-        let sort = NSSortDescriptor(keyPath: \ContactEntity.name, ascending: true)
+        var sort: NSSortDescriptor
+        switch order {
+        case .alphabetical:
+            sort = NSSortDescriptor(keyPath: \ContactEntity.name, ascending: true)
+        case .backwards:
+            sort = NSSortDescriptor(keyPath: \ContactEntity.name, ascending: false)
+        case .dueDate:
+            sort = NSSortDescriptor(keyPath: \ContactEntity.name, ascending: true)
+        case .favorites:
+            sort = NSSortDescriptor(keyPath: \ContactEntity.isFavorite, ascending: true)
+        }
         request.sortDescriptors = [sort]
 //        let filter = NSPredicate(format: "name == %@", "Apple")
 //        request.predicate = filter
         do {
-            fetchedContacts = try coreDataManager.context.fetch(request)
+            var contacts = try coreDataManager.context.fetch(request)
+            switch order {
+            case .alphabetical:
+                fetchedContacts = contacts
+            case .backwards:
+                fetchedContacts = contacts
+            case .dueDate:
+                fetchedContacts = contacts.filter({getNextEventDate(component: Components(rawValue: $0.component!) ?? .day, lastContact: $0.lastContact!, interval: Int($0.distance)) <= Date()}).sorted(by: {getNextEventDate(component: Components(rawValue: $0.component!) ?? .day, lastContact: $0.lastContact!, interval: Int($0.distance)) < getNextEventDate(component: Components(rawValue: $1.component!) ?? .day, lastContact: $1.lastContact!, interval: Int($1.distance))})
+            case .favorites:
+                fetchedContacts = contacts.filter({$0.isFavorite == true})
+            }
         } catch let error {
             print("Error fetching contacts: \(error.localizedDescription)")
         }
@@ -250,7 +270,7 @@ extension ViewModel {
             coreDataManager.save()
             
             fetchedContacts.removeAll()
-            getContacts()
+            getContacts(order: contactsOrder)
             
             if reminder {
                 setNotification(contact: newContact, component: component, lastContact: lastContact, interval: distance)
@@ -306,7 +326,7 @@ extension ViewModel {
             coreDataManager.save()
             
             fetchedContacts.removeAll()
-            getContacts()
+            getContacts(order: contactsOrder)
             
             if contact.meetings == nil {
                 createMeeting(contact: contact, meetingDate: meetingDate, meetingDescribe: meetingDescribe, meetingFeeling: meetingFeeling)
@@ -333,7 +353,7 @@ extension ViewModel {
                 fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
             }
             fetchedContacts.removeAll()
-            getContacts()
+            getContacts(order: contactsOrder)
         }
     }
     
@@ -353,7 +373,7 @@ extension ViewModel {
             
             fetchedMeetings.removeAll()
             fetchedContacts.removeAll()
-            getContacts()
+            getContacts(order: contactsOrder)
             getMeetingsOfContact(forContact: contact)
         }
     }
@@ -366,7 +386,7 @@ extension ViewModel {
             
             fetchedMeetings.removeAll()
             fetchedContacts.removeAll()
-            getContacts()
+            getContacts(order: contactsOrder)
             getMeetingsOfContact(forContact: contact)
         }
     }
@@ -377,7 +397,7 @@ extension ViewModel {
         coreDataManager.save()
         
         fetchedContacts.removeAll()
-        getContacts()
+        getContacts(order: contactsOrder)
     }
     
     func updateLastContact(contact: ContactEntity) {
@@ -388,7 +408,7 @@ extension ViewModel {
         coreDataManager.save()
         
         fetchedContacts.removeAll()
-        getContacts()
+        getContacts(order: contactsOrder)
     }
     
     func deleteMeetingFromMeetingView(contact: ContactEntity, meeting: MeetingEntity) {
@@ -398,7 +418,7 @@ extension ViewModel {
         
         fetchedMeetings.removeAll()
         fetchedContacts.removeAll()
-        getContacts()
+        getContacts(order: contactsOrder)
         getMeetingsOfContact(forContact: contact)
     }
     
@@ -421,5 +441,18 @@ extension ViewModel {
                 self?.filterContacts(searchText: searchText)
             }
             .store(in: &cancellables)
+    }
+    
+    func changeContactsOrder(order: ContactsOrder) {
+        switch order {
+        case .alphabetical:
+            getContacts(order: .alphabetical)
+        case .backwards:
+            getContacts(order: .backwards)
+        case .dueDate:
+            getContacts(order: .dueDate)
+        case .favorites:
+            getContacts(order: .favorites)
+        }
     }
 }

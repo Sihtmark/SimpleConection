@@ -15,7 +15,6 @@ struct ContactListView: View {
     @State private var date = Date()
     @State private var feeling = Feelings.notTooBad
     @State private var describe = ""
-    @State private var filter: FilterMainView = .standardOrder
     @State private var showAlert = false
     @State private var notifications = false
     
@@ -40,6 +39,7 @@ struct ContactListView: View {
                         .font(.title3)
                         .foregroundColor(.theme.secondaryText)
                         .padding(.top, 40)
+                        .listRowSeparator(.hidden)
                 }
                 ForEach(vm.isSearching ? vm.filteredContacts : vm.fetchedContacts) { contact in
                     ZStack(alignment: .leading) {
@@ -81,11 +81,26 @@ struct ContactListView: View {
             .searchable(text: $vm.searchText, prompt: Text("Search contacts..."))
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        showAlert.toggle()
-                    } label: {
+                    Menu(content: {
+                        Button("A-Z") {
+//                            vm.contactsOrder = .alphabetical
+                            vm.changeContactsOrder(order: .alphabetical)
+                        }
+                        Button("Z-A") {
+//                            vm.contactsOrder = .backwards
+                            vm.changeContactsOrder(order: .backwards)
+                        }
+                        Button("Favorites") {
+//                            vm.contactsOrder = .favorites
+                            vm.changeContactsOrder(order: .favorites)
+                        }
+                        Button("Due date") {
+//                            vm.contactsOrder = .dueDate
+                            vm.changeContactsOrder(order: .dueDate)
+                        }
+                    }, label: {
                         Image(systemName: "slider.vertical.3")
-                    }
+                    })
                 }
                 ToolbarItem(placement: .navigationBarLeading) {
                     EditButton()
@@ -98,20 +113,6 @@ struct ContactListView: View {
                     }
                 }
             }
-            .alert("Contact filter", isPresented: $showAlert, actions: {
-                Button("Все по алфавиту") {
-                    filter = .alphabeticalOrder
-                }
-                Button("По дате общения") {
-                    filter = .dueDateOrder
-                }
-                Button("Только избранные") {
-                    filter = .favoritesOrder
-                }
-                Button("Без фильтра", role: .destructive) {
-                    filter = .standardOrder
-                }
-            })
             .sheet(item: $isAdding) { contact in
                 sheetView
             }
