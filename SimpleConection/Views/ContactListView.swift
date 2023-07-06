@@ -16,7 +16,7 @@ struct ContactListView: View {
     @State private var feeling = Feelings.notTooBad
     @State private var describe = ""
     @State private var showAlert = false
-    @State private var notifications = false
+//    @State private var notifications = false
     @State private var isAddingNewContact = false
     
     var dateRange: ClosedRange<Date> {
@@ -177,7 +177,6 @@ extension ContactListView {
                     Spacer()
                     Button {
                         vm.createMeeting(contact: isAdding!, meetingDate: date, meetingDescribe: describe, meetingFeeling: feeling)
-                        vm.updateLastContact(contact: isAdding!)
                         isAdding = nil
                         date = Date()
                         feeling = .notTooBad

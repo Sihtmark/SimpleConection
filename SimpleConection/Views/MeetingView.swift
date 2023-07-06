@@ -72,7 +72,6 @@ struct MeetingView: View {
                     Spacer()
                     Button {
                         vm.editMeeting(contact: meeting.contact!, meeting: meeting, meetingDate: date, meetingDescribe: describe, meetingFeeling: feeling)
-                        vm.updateLastContact(contact: meeting.contact!)
                         dismiss()
                     } label: {
                         Text("Save")
@@ -87,7 +86,6 @@ struct MeetingView: View {
                     Spacer()
                     Button(role: .destructive) {
                         vm.deleteMeetingFromMeetingView(contact: meeting.contact!, meeting: meeting)
-                        vm.updateLastContact(contact: contact)
                         dismiss()
                     } label: {
                         Text("Delete")

@@ -30,7 +30,7 @@ struct ContactCellView: View {
                         .bold()
                         .font(.headline)
                         .foregroundColor(.theme.standard)
-                    Text(vm.daysFromLastEventCell(lastEvent: contact.lastContact ?? Date(), component: Components(rawValue: contact.component!) ?? .day, interval: Int(contact.distance)))
+                    Text(vm.daysFromLastEventCell(lastEvent: contact.lastContact ?? Date(), component: Components(rawValue: contact.component ?? "") ?? .day, interval: Int(contact.distance)))
                         .foregroundColor(vm.getNextEventDate(component: Components(rawValue: contact.component ?? "") ?? Components.day, lastContact: contact.lastContact ?? Date(), interval: Int(contact.distance)) > Date() ? .theme.green : .theme.red)
                         .font(.caption)
                         .padding(.trailing)

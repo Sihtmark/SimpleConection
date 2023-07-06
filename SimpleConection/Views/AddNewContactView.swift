@@ -58,6 +58,11 @@ struct AddNewContactView: View {
                 describeInFocus = false
             }
         }
+        .onDisappear {
+            if !vm.notificationsRequest {
+                vm.sendNotificationRequest()
+            }
+        }
     }
 }
 

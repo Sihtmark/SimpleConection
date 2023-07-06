@@ -197,7 +197,6 @@ extension ContactView {
                     Spacer()
                     Button {
                         vm.createMeeting(contact: contact, meetingDate: date, meetingDescribe: describe, meetingFeeling: feeling)
-                        vm.updateLastContact(contact: contact)
                         isAdding.toggle()
                         date = Date()
                         feeling = .notTooBad

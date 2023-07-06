@@ -28,16 +28,16 @@ class NotificationManager {
     
     func scheduleNotification(contact: ContactEntity, year: Int, month: Int, day: Int) {
         let content = UNMutableNotificationContent()
-        content.title = "It's time to talk to \(contact.name!)! ⏰"
+        content.title = "⏰ It's time to talk to \(contact.name ?? "Your contact")!"
         content.sound = .default
 
         var dateComponents = DateComponents()
         dateComponents.year = year
         dateComponents.month = month
         dateComponents.day = day
-        dateComponents.hour = 9
-        dateComponents.minute = 15
-        let calendarTrigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
+        dateComponents.hour = 16
+        dateComponents.minute = 45
+        let calendarTrigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
 
         let request = UNNotificationRequest(
             identifier: contact.id!.uuidString,
