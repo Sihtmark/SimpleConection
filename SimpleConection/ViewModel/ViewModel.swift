@@ -17,32 +17,22 @@ final class ViewModel: ObservableObject {
     @Published var fetchedMeetings = [MeetingEntity]()
     @Published var filteredContacts = [ContactEntity]()
     @Published var searchText = ""
-    @Published var isSignedIntoiCloud = false
-    @Published var error = ""
-    @Published var userName = ""
-    @Published var email = ""
-    @Published var telephone = ""
     @Published var permissionStatus = false
+    
     @AppStorage("contacts_order") var contactsOrder: ContactsOrder = .alphabetical
     @AppStorage("notifications_request") var notificationsRequest = false
     
     private let notificationManager = NotificationManager.shared
     private let coreDataManager = CoreDataManager.shared
     private let hapticManager = HapticManager.shared
+    private var cancellables = Set<AnyCancellable>()
     
     var isSearching: Bool {
         !searchText.isEmpty
     }
     
-    private var cancellables = Set<AnyCancellable>()
-    
     init() {
-//        requestPermission()
-//        getiCloudStatus()
-//        fetchiCloudUserRecordID()
-        
         getContacts(order: contactsOrder)
-//        getMeetings()
         addSubscribers()
     }
     
@@ -233,7 +223,6 @@ final class ViewModel: ObservableObject {
     
     private func addSubscribers() {
         $searchText
-//            .debounce(for: 0.3, scheduler: DispatchQueue.main)
             .sink { [weak self] searchText in
                 self?.filterContacts(searchText: searchText)
             }
@@ -243,18 +232,35 @@ final class ViewModel: ObservableObject {
     func changeContactsOrder(order: ContactsOrder) {
         switch order {
         case .alphabetical:
+            contactsOrder = .alphabetical
             getContacts(order: .alphabetical)
         case .backwards:
+            contactsOrder = .backwards
             getContacts(order: .backwards)
         case .dueDate:
+            contactsOrder = .dueDate
             getContacts(order: .dueDate)
         case .favorites:
+            contactsOrder = .favorites
             getContacts(order: .favorites)
+        }
+    }
+    
+    func noContactsText(order: ContactsOrder) -> String {
+        switch order {
+        case .alphabetical:
+            return "Probably you should click the button and add your first contact to your list"
+        case .backwards:
+            return "Probably you should click the button and add your first contact to your list"
+        case .dueDate:
+            return "You have no expired communications for today. Just change your filter or add a new contact to your list"
+        case .favorites:
+            return "You have no favorite contacts yet. You should change your filter or click the button and add your first favorite contact to your list"
         }
     }
 }
 
-//MARK: Core Date CRUD functions
+//MARK: Core Data CRUD functions
 extension ViewModel {
     func createContact(name: String, isFavorite: Bool, distance: Int, component: Components, lastContact: Date, reminder: Bool, meetingDate: Date, meetingDescribe: String, meetingFeeling: Feelings) {
         withAnimation {
@@ -321,8 +327,6 @@ extension ViewModel {
             do {
                 try coreDataManager.context.save()
             } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
                 let nsError = error as NSError
                 fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
             }
@@ -451,82 +455,4 @@ extension ViewModel {
             
         }
     }
-}
-
-// MARK: CloudKit
-extension ViewModel {
-    // ‼️
-//    func moveContact(from: IndexSet, to: Int) {
-//        fetchedContacts
-//        var contacts = fetchedContacts.map{$0}
-//        contacts.move(fromOffsets: from, toOffset: to)
-//    }
-    
-//    enum CloudKitError: String {
-//        case iCloudAccountNotDetermined
-//        case iCloudAccountRestricted
-//        case iCloudAccountNotFound
-//        case iCloudAccountTemporarilyUnavailable
-//        case iCloudAccountUnknown
-//    }
-    
-//    func getiCloudStatus() {
-//        CKContainer.default().accountStatus { [weak self] returnedStatus, returnedError in
-//            DispatchQueue.main.async {
-//                switch returnedStatus {
-//                case .couldNotDetermine:
-//                    self?.error = CloudKitError.iCloudAccountNotDetermined.rawValue
-//                case .available:
-//                    self?.isSignedIntoiCloud = true
-//                case .restricted:
-//                    self?.error = CloudKitError.iCloudAccountRestricted.rawValue
-//                case .noAccount:
-//                    self?.error = CloudKitError.iCloudAccountNotFound.rawValue
-//                case .temporarilyUnavailable:
-//                    self?.error = CloudKitError.iCloudAccountTemporarilyUnavailable.rawValue
-//                @unknown default:
-//                    self?.error = CloudKitError.iCloudAccountUnknown.rawValue
-//                }
-//            }
-//        }
-//    }
-//
-//    func discoveriCloudUser(id: CKRecord.ID) {
-//        CKContainer.default().discoverUserIdentity(withUserRecordID: id) { [weak self] returnedIdentity, returnedError in
-//            DispatchQueue.main.async {
-//
-//                if let name = returnedIdentity?.nameComponents?.familyName {
-//                    self?.userName = name
-//                }
-//
-//                // We can't get email because we get permission by id. We can get email if we get permission by email
-//                if let email = returnedIdentity?.lookupInfo?.emailAddress {
-//                    self?.email = email
-//                }
-//
-//                // We can't get number because we get permission by id. We can get number if we get permission by number
-//                if let phone = returnedIdentity?.lookupInfo?.phoneNumber {
-//                    self?.telephone = phone
-//                }
-//            }
-//        }
-//    }
-//
-//    func fetchiCloudUserRecordID() {
-//        CKContainer.default().fetchUserRecordID { [weak self] returnedID, returnedError in
-//            if let id = returnedID {
-//                self?.discoveriCloudUser(id: id)
-//            }
-//        }
-//    }
-    
-//    func requestPermission() {
-//        CKContainer.default().requestApplicationPermission([.userDiscoverability]) { [weak self] returnedStatus, returnedError in
-//            DispatchQueue.main.async {
-//                if returnedStatus == .granted {
-//                    self?.permissionStatus = true
-//                }
-//            }
-//        }
-//    }
 }

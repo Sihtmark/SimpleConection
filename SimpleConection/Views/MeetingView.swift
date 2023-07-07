@@ -32,66 +32,14 @@ struct MeetingView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 30) {
-                HStack {
-                    Spacer()
-                    DatePicker(selection: $date, in: dateRange, displayedComponents: .date) {}
-                        .foregroundColor(.theme.accent)
-                        .datePickerStyle(.wheel)
-                        .frame(width: 320, height: 220)
-                        .padding(.trailing, 7.5)
-                        .overlay(alignment: .bottom) {
-                            RoundedRectangle(cornerRadius: 20)
-                                .fill(.gray.opacity(0.2))
-                                .allowsHitTesting(false)
-                        }
-                    Spacer()
-                }
-                Picker("", selection: $feeling) {
-                    ForEach(Feelings.allCases, id: \.self) { feeling in
-                        Text(feeling.rawValue).tag(feeling)
-                    }
-                }
-                .pickerStyle(.segmented)
+                meetingDayPicker
+                feelingPicker
                 if describeInFocus {
-                    Text("To hide the keyboard double-tap on screenу")
-                        .font(.caption)
-                        .bold()
-                        .foregroundColor(.theme.secondaryText)
+                    hideKeyboardClue
                 }
-                TextEditor(text: $describe)
-                    .focused($describeInFocus)
-                    .frame(height: 200)
-                    .foregroundColor(.theme.secondaryText)
-                    .padding(10)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(.gray.opacity(0.2))
-                            .allowsHitTesting(false)
-                    }
-                HStack {
-                    Spacer()
-                    Button {
-                        vm.editMeeting(contact: meeting.contact!, meeting: meeting, meetingDate: date, meetingDescribe: describe, meetingFeeling: feeling)
-                        dismiss()
-                    } label: {
-                        Text("Save")
-                            .bold()
-                            .padding(10)
-                            .padding(.horizontal)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    Spacer()
-                }
-                HStack {
-                    Spacer()
-                    Button(role: .destructive) {
-                        vm.deleteMeetingFromMeetingView(contact: meeting.contact!, meeting: meeting)
-                        dismiss()
-                    } label: {
-                        Text("Delete")
-                    }
-                    Spacer()
-                }
+                notes
+                saveButton
+                deleteButton
                 Spacer()
             }
             .padding(.top, 30)
@@ -122,5 +70,84 @@ struct EventView_Previews: PreviewProvider {
             .environment(\.managedObjectContext, CoreDataManager.preview.container.viewContext)
             .environmentObject(ViewModel())
             .preferredColorScheme(.dark)
+    }
+}
+
+extension MeetingView {
+    
+    var meetingDayPicker: some View {
+        HStack {
+            Spacer()
+            DatePicker(selection: $date, in: dateRange, displayedComponents: .date) {}
+                .foregroundColor(.theme.accent)
+                .datePickerStyle(.wheel)
+                .frame(width: 320, height: 220)
+                .padding(.trailing, 7.5)
+                .overlay(alignment: .bottom) {
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(.gray.opacity(0.2))
+                        .allowsHitTesting(false)
+                }
+            Spacer()
+        }
+    }
+    
+    var feelingPicker: some View {
+        Picker("", selection: $feeling) {
+            ForEach(Feelings.allCases, id: \.self) { feeling in
+                Text(feeling.rawValue).tag(feeling)
+            }
+        }
+        .pickerStyle(.segmented)
+    }
+    
+    var hideKeyboardClue: some View {
+        Text("To hide the keyboard double-tap on screenу")
+            .font(.caption)
+            .bold()
+            .foregroundColor(.theme.secondaryText)
+    }
+    
+    var notes: some View {
+        TextEditor(text: $describe)
+            .focused($describeInFocus)
+            .frame(height: 200)
+            .foregroundColor(.theme.secondaryText)
+            .padding(10)
+            .overlay {
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(.gray.opacity(0.2))
+                    .allowsHitTesting(false)
+            }
+    }
+    
+    var deleteButton: some View {
+        HStack {
+            Spacer()
+            Button(role: .destructive) {
+                vm.deleteMeetingFromMeetingView(contact: meeting.contact!, meeting: meeting)
+                dismiss()
+            } label: {
+                Text("Delete")
+            }
+            Spacer()
+        }
+    }
+    
+    var saveButton: some View {
+        HStack {
+            Spacer()
+            Button {
+                vm.editMeeting(contact: meeting.contact!, meeting: meeting, meetingDate: date, meetingDescribe: describe, meetingFeeling: feeling)
+                dismiss()
+            } label: {
+                Text("Save")
+                    .bold()
+                    .padding(10)
+                    .padding(.horizontal)
+            }
+            .buttonStyle(.borderedProminent)
+            Spacer()
+        }
     }
 }

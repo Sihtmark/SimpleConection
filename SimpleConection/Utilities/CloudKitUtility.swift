@@ -273,3 +273,81 @@ extension CloudKitUtility {
         }
     }
 }
+
+// MARK: CloudKit
+extension ViewModel {
+    // ‼️
+//    func moveContact(from: IndexSet, to: Int) {
+//        fetchedContacts
+//        var contacts = fetchedContacts.map{$0}
+//        contacts.move(fromOffsets: from, toOffset: to)
+//    }
+    
+//    enum CloudKitError: String {
+//        case iCloudAccountNotDetermined
+//        case iCloudAccountRestricted
+//        case iCloudAccountNotFound
+//        case iCloudAccountTemporarilyUnavailable
+//        case iCloudAccountUnknown
+//    }
+    
+//    func getiCloudStatus() {
+//        CKContainer.default().accountStatus { [weak self] returnedStatus, returnedError in
+//            DispatchQueue.main.async {
+//                switch returnedStatus {
+//                case .couldNotDetermine:
+//                    self?.error = CloudKitError.iCloudAccountNotDetermined.rawValue
+//                case .available:
+//                    self?.isSignedIntoiCloud = true
+//                case .restricted:
+//                    self?.error = CloudKitError.iCloudAccountRestricted.rawValue
+//                case .noAccount:
+//                    self?.error = CloudKitError.iCloudAccountNotFound.rawValue
+//                case .temporarilyUnavailable:
+//                    self?.error = CloudKitError.iCloudAccountTemporarilyUnavailable.rawValue
+//                @unknown default:
+//                    self?.error = CloudKitError.iCloudAccountUnknown.rawValue
+//                }
+//            }
+//        }
+//    }
+//
+//    func discoveriCloudUser(id: CKRecord.ID) {
+//        CKContainer.default().discoverUserIdentity(withUserRecordID: id) { [weak self] returnedIdentity, returnedError in
+//            DispatchQueue.main.async {
+//
+//                if let name = returnedIdentity?.nameComponents?.familyName {
+//                    self?.userName = name
+//                }
+//
+//                // We can't get email because we get permission by id. We can get email if we get permission by email
+//                if let email = returnedIdentity?.lookupInfo?.emailAddress {
+//                    self?.email = email
+//                }
+//
+//                // We can't get number because we get permission by id. We can get number if we get permission by number
+//                if let phone = returnedIdentity?.lookupInfo?.phoneNumber {
+//                    self?.telephone = phone
+//                }
+//            }
+//        }
+//    }
+//
+//    func fetchiCloudUserRecordID() {
+//        CKContainer.default().fetchUserRecordID { [weak self] returnedID, returnedError in
+//            if let id = returnedID {
+//                self?.discoveriCloudUser(id: id)
+//            }
+//        }
+//    }
+    
+//    func requestPermission() {
+//        CKContainer.default().requestApplicationPermission([.userDiscoverability]) { [weak self] returnedStatus, returnedError in
+//            DispatchQueue.main.async {
+//                if returnedStatus == .granted {
+//                    self?.permissionStatus = true
+//                }
+//            }
+//        }
+//    }
+}
