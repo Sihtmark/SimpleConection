@@ -256,11 +256,10 @@ final class ViewModel: ObservableObject {
 
 //MARK: Core Date CRUD functions
 extension ViewModel {
-    func createContact(name: String, birthday: Date, isFavorite: Bool, distance: Int, component: Components, lastContact: Date, reminder: Bool, meetingDate: Date, meetingDescribe: String, meetingFeeling: Feelings) {
+    func createContact(name: String, isFavorite: Bool, distance: Int, component: Components, lastContact: Date, reminder: Bool, meetingDate: Date, meetingDescribe: String, meetingFeeling: Feelings) {
         withAnimation {
             let newContact = ContactEntity(context: coreDataManager.context)
             newContact.name = name
-            newContact.birthday = birthday
             newContact.isFavorite = isFavorite
             newContact.distance = Int16(distance)
             newContact.component = component.rawValue
@@ -288,10 +287,9 @@ extension ViewModel {
         }
     }
     
-    func editContact(contact: ContactEntity, name: String, birthday: Date, isFavorite: Bool, distance: Int, component: Components, lastContact: Date, reminder: Bool, meetingDate: Date, meetingDescribe: String, meetingFeeling: Feelings) {
+    func editContact(contact: ContactEntity, name: String, isFavorite: Bool, distance: Int, component: Components, lastContact: Date, reminder: Bool, meetingDate: Date, meetingDescribe: String, meetingFeeling: Feelings) {
         withAnimation {
             contact.name = name
-            contact.birthday = birthday
             contact.isFavorite = isFavorite
             contact.distance = Int16(distance)
             contact.component = component.rawValue

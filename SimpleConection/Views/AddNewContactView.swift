@@ -12,7 +12,6 @@ struct AddNewContactView: View {
     
     @EnvironmentObject private var vm: ViewModel
     @State private var name = ""
-    @State private var selectedDate = Date()
     @Environment(\.dismiss) var dismiss
     @State private var lastMeeting = Date()
     @State private var component = Components.week
@@ -96,8 +95,6 @@ extension AddNewContactView {
                 }
                 .padding(.horizontal, 5)
             }
-            DatePicker("Birthday:", selection: $selectedDate, in: dateRange, displayedComponents: .date)
-                .foregroundColor(.theme.standard)
         }
     }
     var meetingTrackerSection: some View {
@@ -172,7 +169,7 @@ extension AddNewContactView {
         HStack {
             Spacer()
             Button {
-                vm.createContact(name: name, birthday: selectedDate, isFavorite: isFavorite, distance: distance, component: component, lastContact: lastMeeting, reminder: reminder, meetingDate: lastMeeting, meetingDescribe: describe, meetingFeeling: feeling)
+                vm.createContact(name: name, isFavorite: isFavorite, distance: distance, component: component, lastContact: lastMeeting, reminder: reminder, meetingDate: lastMeeting, meetingDescribe: describe, meetingFeeling: feeling)
                 dismiss()
             } label: {
                 Text("Save")

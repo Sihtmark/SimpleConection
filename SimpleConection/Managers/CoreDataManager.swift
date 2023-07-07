@@ -14,7 +14,6 @@ struct CoreDataManager {
         let viewContext = result.container.viewContext
         let newContact = ContactEntity(context: viewContext)
         newContact.name = "Janet"
-        newContact.birthday = Date().addingTimeInterval(-973878082)
         newContact.component = Components.week.rawValue
         newContact.distance = Int16(5)
         newContact.isFavorite = false

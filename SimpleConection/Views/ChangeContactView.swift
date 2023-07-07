@@ -13,7 +13,6 @@ struct ChangeContactView: View {
     @Binding var contact: ContactEntity
     @Environment(\.dismiss) var dismiss
     @State private var name = ""
-    @State private var birthday = Date()
     @State private var lastMeeting = Date()
     @State private var component = Components.week
     @State private var distance = 2
@@ -44,7 +43,6 @@ struct ChangeContactView: View {
         }
         .onAppear {
             name = contact.name!
-            birthday = contact.birthday!
             lastMeeting = contact.lastContact ?? Date()
             component = Components(rawValue: contact.component!) ?? .day
             distance = Int(contact.distance)
@@ -92,8 +90,6 @@ extension ChangeContactView {
                 .foregroundColor(.theme.standard)
                 .textFieldStyle(.roundedBorder)
                 .autocorrectionDisabled()
-            DatePicker("Birthday", selection: $birthday, in: dateRange, displayedComponents: .date)
-                .foregroundColor(.theme.standard)
         }
     }
     var meetingTrackerSection: some View {
@@ -170,7 +166,7 @@ extension ChangeContactView {
         HStack {
             Spacer()
             Button {
-                vm.editContact(contact: contact, name: name, birthday: birthday, isFavorite: contact.isFavorite, distance: distance, component: component, lastContact: (contact.meetings == nil ? lastMeeting : contact.lastContact) ?? Date(), reminder: reminder, meetingDate: lastMeeting, meetingDescribe: describe, meetingFeeling: feeling)
+                vm.editContact(contact: contact, name: name, isFavorite: contact.isFavorite, distance: distance, component: component, lastContact: (contact.meetings == nil ? lastMeeting : contact.lastContact) ?? Date(), reminder: reminder, meetingDate: lastMeeting, meetingDescribe: describe, meetingFeeling: feeling)
                 dismiss()
             } label: {
                 Text("Save")

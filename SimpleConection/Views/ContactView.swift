@@ -14,7 +14,6 @@ struct ContactView: View {
     @State var contact: ContactEntity
     @State private var isEditing = false
     @State private var name = ""
-    @State private var selectedDate = Date()
     @State private var isAdding = false
     @State private var date = Date()
     @State private var feeling = Feelings.notTooBad
@@ -73,7 +72,6 @@ struct ContactView: View {
             vm.fetchedMeetings.removeAll()
             vm.getMeetingsOfContact(forContact: contact)
             name = contact.name!
-            selectedDate = contact.birthday!
             isFavorite = contact.isFavorite
         }
     }
