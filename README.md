@@ -6,8 +6,8 @@ User specifies the date of last communication and frequency of communications in
 Application is sending notifications when it's time to communicate with certain contact.
 App uses icloud to save data and sinc between different devices.
 
-SwiftUI
-CoreData + CloudKit
-Notifications
-Date methods
-Searching and filtering
+- SwiftUI
+- CoreData + CloudKit
+- Notifications
+- Date methods
+- Searching and filtering
