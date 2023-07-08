@@ -99,8 +99,20 @@ extension AddNewContactView {
     }
     var meetingTrackerSection: some View {
         VStack(alignment: .leading, spacing: 20) {
-            DatePicker("Last contact:", selection: $lastMeeting, in: dateRange, displayedComponents: .date)
-                .foregroundColor(.theme.standard)
+            HStack {
+                Spacer()
+                DatePicker(selection: $lastMeeting, in: dateRange, displayedComponents: .date) {}
+                    .foregroundColor(.theme.accent)
+                    .datePickerStyle(.wheel)
+                    .frame(width: 320, height: 220)
+                    .padding(.trailing, 7.5)
+                    .overlay(alignment: .bottom) {
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(.gray.opacity(0.2))
+                            .allowsHitTesting(false)
+                    }
+                Spacer()
+            }
             VStack {
                 Picker("", selection: $feeling) {
                     ForEach(Feelings.allCases, id: \.self) { feeling in

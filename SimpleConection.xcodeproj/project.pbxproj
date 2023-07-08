@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		A013035E2A4C16760065FEA4 /* SimpleConection.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A013035C2A4C16760065FEA4 /* SimpleConection.xcdatamodeld */; };
+		A0292DA42A58362A009643FB /* NoContactsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0292DA32A58362A009643FB /* NoContactsView.swift */; };
 		A03464482A3C3D7900E7A35C /* CloudKitUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = A03464472A3C3D7900E7A35C /* CloudKitUtility.swift */; };
 		A05991A92A3451EB0010D2ED /* SimpleConectionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A05991A82A3451EB0010D2ED /* SimpleConectionApp.swift */; };
 		A05991AD2A3451EC0010D2ED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A05991AC2A3451EC0010D2ED /* Assets.xcassets */; };
@@ -28,6 +29,7 @@
 
 /* Begin PBXFileReference section */
 		A013035D2A4C16760065FEA4 /* SimpleConection.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = SimpleConection.xcdatamodel; sourceTree = "<group>"; };
+		A0292DA32A58362A009643FB /* NoContactsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoContactsView.swift; sourceTree = "<group>"; };
 		A03464472A3C3D7900E7A35C /* CloudKitUtility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitUtility.swift; sourceTree = "<group>"; };
 		A0397C322A38771200AA9168 /* SimpleConection.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SimpleConection.entitlements; sourceTree = "<group>"; };
 		A05991A52A3451EB0010D2ED /* SimpleConection.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SimpleConection.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -154,6 +156,7 @@
 				A05991EA2A3454EE0010D2ED /* ChangeContactView.swift */,
 				A05991EE2A34550E0010D2ED /* ContactView.swift */,
 				A05991F02A3455200010D2ED /* MeetingView.swift */,
+				A0292DA32A58362A009643FB /* NoContactsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -234,6 +237,7 @@
 				A05991EB2A3454EE0010D2ED /* ChangeContactView.swift in Sources */,
 				A05991BF2A3452CA0010D2ED /* NotificationManager.swift in Sources */,
 				A03464482A3C3D7900E7A35C /* CloudKitUtility.swift in Sources */,
+				A0292DA42A58362A009643FB /* NoContactsView.swift in Sources */,
 				A05991C22A3453060010D2ED /* Model.swift in Sources */,
 				A05991BD2A3452B00010D2ED /* HapticManager.swift in Sources */,
 				A05991E92A3454DF0010D2ED /* AddNewContactView.swift in Sources */,
