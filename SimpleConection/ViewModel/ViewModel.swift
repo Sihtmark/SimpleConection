@@ -246,8 +246,8 @@ final class ViewModel: ObservableObject {
         }
     }
     
-    func noContactsText(order: ContactsOrder) -> String {
-        switch order {
+    func noContactsText() -> String {
+        switch contactsOrder {
         case .alphabetical:
             return "Probably you should click the button and add your first contact to your list"
         case .backwards:
@@ -256,6 +256,19 @@ final class ViewModel: ObservableObject {
             return "You have no expired communications for today. Just change your filter or add a new contact to your list"
         case .favorites:
             return "You have no favorite contacts yet. You should change your filter or click the button and add your first favorite contact to your list"
+        }
+    }
+    
+    func contactsTitle() -> String {
+        switch contactsOrder {
+        case .alphabetical:
+            return "Contacts A-Z"
+        case .backwards:
+            return "Contacts Z-A"
+        case .dueDate:
+            return "By due date"
+        case .favorites:
+            return "Favorites"
         }
     }
 }

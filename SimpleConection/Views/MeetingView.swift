@@ -111,7 +111,7 @@ extension MeetingView {
     var notes: some View {
         TextEditor(text: $describe)
             .focused($describeInFocus)
-            .frame(height: 200)
+            .frame(height: 50)
             .foregroundColor(.theme.secondaryText)
             .padding(10)
             .overlay {

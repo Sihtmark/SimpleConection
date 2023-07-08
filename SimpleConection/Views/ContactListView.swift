@@ -43,14 +43,11 @@ struct ContactListView: View {
             .scrollIndicators(ScrollIndicatorVisibility.hidden)
             .frame(maxWidth: 550)
             .listStyle(.inset)
-            .navigationTitle("Contacts")
+            .navigationTitle(vm.contactsTitle())
             .searchable(text: $vm.searchText, prompt: Text("Search contact by name..."))
             .toolbar {
-                ToolbarItem(placement: .principal) {
-                    menu
-                }
                 ToolbarItem(placement: .navigation) {
-                    EditButton()
+                    menu
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
@@ -114,7 +111,7 @@ extension ContactListView {
                 vm.changeContactsOrder(order: .dueDate)
             }
         }, label: {
-            Text(vm.contactsOrder.rawValue)
+            Image(systemName: "list.bullet.circle.fill")
         })
     }
     
